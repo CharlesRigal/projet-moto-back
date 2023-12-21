@@ -7,7 +7,7 @@ Pour installer le projet
 
 > ./venv/Scripts/activate
 
-(venv) > pip install -r requirements. txt
+(venv) > pip install -r requirements.txt
 ```
 
 Pour démarrer le developpement
@@ -17,5 +17,5 @@ Pour démarrer le developpement
 
 (venv) > cd application
 
-(venv) > uvicorn main:app
+(venv) > uvicorn main:app --reload
 ```
