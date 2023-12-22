@@ -2,8 +2,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import sessionmaker, Session
 
-from application.models.users import User
-from application.services.utils import get_db
+from models.users import User
+from services.utils import get_db
 
 
 class UserRepository:

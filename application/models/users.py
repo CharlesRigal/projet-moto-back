@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy import UUID, Column, String
 
-from application.config.database import Base
+from config.database import Base
 
 
 class User(Base):
