@@ -1,9 +1,8 @@
 import uuid
-from datetime import datetime
 
 from sqlalchemy import UUID, Column, String
 
-from database import Base
+from application.config.database import Base
 
 
 class User(Base):
@@ -12,3 +11,5 @@ class User(Base):
     username = Column(String(255), unique=True)
     email = Column(String(255), unique=True)
     password = Column(String(255))
+    auth0_id = Column(String(255), unique=True)
+# TODO: Add self relation for friend list

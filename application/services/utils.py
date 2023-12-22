@@ -4,7 +4,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import SecurityScopes, HTTPAuthorizationCredentials, HTTPBearer
 
-from config import get_settings
+from application.config import get_settings
+from application.config.database import SessionLocal
 
 
 class UnauthorizedException(HTTPException):
@@ -76,3 +77,9 @@ class VerifyToken:
         for value in expected_value:
             if value not in payload_claim:
                 raise UnauthorizedException(detail=f'Missing "{claim_name}" scope')
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:    db.close()
