@@ -24,7 +24,7 @@ def private(auth_result: str = Security(auth.verify)):
     return auth_result
 
 
-@app.get("/api/private-scoped")
+@router.get("/api/private-scoped")
 def private_scoped(auth_result: str = Security(auth.verify, scopes=['read:messages'])):
     """A valid access token and an appropriate scope are required to access
     this route

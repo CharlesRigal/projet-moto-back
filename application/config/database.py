@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-SQLALCHEMY_DATABASE_URL = 'postgresql://username:password@100.0.0.0:8080/database'
+SQLALCHEMY_DATABASE_URL = 'mysql://root:@localhost:3306/moto'
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
