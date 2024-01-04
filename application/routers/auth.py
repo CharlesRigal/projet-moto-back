@@ -1,25 +1,25 @@
+from datetime import timedelta, datetime
 from typing import Annotated
 
-from fastapi import Security, APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from passlib.context import CryptContext
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
-from repositories import users as users_repo
-from config.database import SessionLocal
+
+from dto.auth import CreateUserRequest, Token
 from models import User
+from services.security import authenticate_user, create_jwt
 from services.utils import get_db
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from jose import jwt, JWTError
+from config.env import get_settings
 
 router = APIRouter()
 
+SECRET_KEY = get_settings().jwt_secret_key
+ALGORITHM = get_settings().jwt_algorithm
+DELTA_HOURS = get_settings().jwt_expire_hours
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-class CreateUserRequest(BaseModel):
-    username: str
-    email: str
-    password: str
-
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
@@ -35,3 +35,18 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     db.add(create_user_model)
     db.commit()
     return {'success': True}
+
+
+@router.post("/api/v1/auth/signin", status_code=status.HTTP_200_OK, response_model=Token)
+def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+                  db: db_dependency):
+    """Log in a user and retrieve a JWT token.
+        The username is the email !!!
+    """
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect")
+    user = db.query(User).filter(User.email == form_data.username).first()
+    token = create_jwt(user, timedelta(hours=DELTA_HOURS))
+    return {'access_token': token, 'token_type': 'bearer'}
+

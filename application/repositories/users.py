@@ -23,3 +23,7 @@ class UserRepository:
 
     def get_all_users(self):
         return self.db.query(User)
+
+
+def get_all_users(db: Session = Depends(get_db())):
+    return db.query(User)
