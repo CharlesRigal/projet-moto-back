@@ -1,33 +1,19 @@
-from fastapi import Security, APIRouter
+from typing import Annotated
 
-from services.utils import VerifyToken
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-auth = VerifyToken()
+from models import User
+from repositories.users import UserRepository
+from services.utils import get_db
+
 router = APIRouter()
 
-
-@router.get("/api/v1/public")
-def public():
-    """No access token required to access this route"""
-
-    result = {
-        "status": "success",
-        "msg": ("Hello from a public endpoint! You don't need to be "
-                "authenticated to see this.")
-    }
-    return result
+db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.get("/api/v1/private")
-def private(auth_result: str = Security(auth.verify)):
-    """A valid access token is required to access this route"""
-    return auth_result
+@router.get("/api/v1/users")
+def get_users(db: db_dependency):
+    """get all the users | for development only"""
+    return db.query(User).all()
 
-
-@router.get("/api/private-scoped")
-def private_scoped(auth_result: str = Security(auth.verify, scopes=['read:messages'])):
-    """A valid access token and an appropriate scope are required to access
-    this route
-    """
-
-    return auth_result
