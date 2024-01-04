@@ -13,8 +13,12 @@ from services.utils import get_db
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from config.env import get_settings
+from services.security import get_current_user
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/api/v1/auth',
+    tags=['auth']
+)
 
 SECRET_KEY = get_settings().jwt_secret_key
 ALGORITHM = get_settings().jwt_algorithm
@@ -22,9 +26,10 @@ DELTA_HOURS = get_settings().jwt_expire_hours
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
-@router.post("/api/v1/auth/signup", status_code=status.HTTP_201_CREATED)
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
 def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     """Create a user account"""
     create_user_model = User(
@@ -37,7 +42,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     return {'success': True}
 
 
-@router.post("/api/v1/auth/signin", status_code=status.HTTP_200_OK, response_model=Token)
+@router.post("/signin", status_code=status.HTTP_200_OK, response_model=Token)
 def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                   db: db_dependency):
     """Log in a user and retrieve a JWT token.
@@ -50,3 +55,7 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     token = create_jwt(user, timedelta(hours=DELTA_HOURS))
     return {'access_token': token, 'token_type': 'bearer'}
 
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+def get_current_user(current_user: user_dependency, db: db_dependency):
+    return current_user

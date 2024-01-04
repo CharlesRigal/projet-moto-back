@@ -16,7 +16,7 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = get_settings().jwt_secret_key
 ALGORITHM = get_settings().jwt_algorithm
 DELTA_HOURS = get_settings().jwt_expire_hours
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/signin')
 
 
 def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
@@ -41,7 +41,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_jwt(user: User, expires_delta: timedelta):
-    encode = {'sub': user.username, 'id': user.user_id}
+    encode = {'sub': user.email, 'id': user.id}
     expires = datetime.now() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)

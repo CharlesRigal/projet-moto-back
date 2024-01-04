@@ -8,12 +8,15 @@ from repositories import users
 from repositories.users import get_all_users
 from services.utils import get_db
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/api/v1/users',
+    tags=['users']
+)
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.get("/api/v1/users")
+@router.get("/")
 def get_users(db: db_dependency):
     """get all the users | for development only"""
     return get_all_users()
