@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime
 from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException
 from passlib.context import CryptContext
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -28,10 +28,31 @@ DELTA_HOURS = get_settings().jwt_expire_hours
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     """Create a user account"""
+    user = db.query(User).filter(User.email == create_user_request.email).first()
+    if user:
+        return {'details': [{
+            "type": 'already_used',
+            "loc": [
+                "body",
+                "email"
+            ],
+            "msg": "Already used",
+            'input': create_user_request
+        }]}
+    user = db.query(User).filter(User.username == create_user_request.username).first()
+    if user:
+        return {'details': [{
+            "type": 'already_used',
+            "loc": [
+                "body",
+                "username"
+            ],
+            "msg": "Already used",
+            'input': create_user_request
+        }]}
     create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,
@@ -61,3 +82,11 @@ def get_current_user(current_user: user_dependency, db: db_dependency):
     user = db.query(User).filter(User.id == current_user.get('id')).first()
     del user.hashed_password
     return user
+
+
+@router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
+def username_exists(db: db_dependency, username: str):
+    """Check if username exists in database. To use in the register form"""
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
