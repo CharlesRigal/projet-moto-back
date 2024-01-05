@@ -19,14 +19,14 @@ router = APIRouter(
     prefix='/api/v1/auth',
     tags=['auth']
 )
+db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 SECRET_KEY = get_settings().jwt_secret_key
 ALGORITHM = get_settings().jwt_algorithm
 DELTA_HOURS = get_settings().jwt_expire_hours
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
@@ -58,4 +58,6 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 
 @router.get("/me", status_code=status.HTTP_200_OK)
 def get_current_user(current_user: user_dependency, db: db_dependency):
-    return current_user
+    user = db.query(User).filter(User.id == current_user.get('id')).first()
+    del user.hashed_password
+    return user

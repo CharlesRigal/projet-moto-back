@@ -10,7 +10,7 @@ from starlette import status
 
 from config.env import get_settings
 from models import User
-
+import logging
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = get_settings().jwt_secret_key
@@ -24,11 +24,21 @@ def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get('sub')
         user_id: int = payload.get('id')
+        user_role: str = payload.get('role')
         if email is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        return {'user_id': user_id, 'email': email}
+        return {'id': user_id, 'email': email, 'role': user_role}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+user_dependency = Annotated[dict, Depends(get_current_user)]
+
+
+def get_current_user_admin(user: user_dependency):
+    if user.get('role') == 'admin':
+        return user
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
 
 def authenticate_user(db: Session, email: str, password: str):
@@ -41,7 +51,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_jwt(user: User, expires_delta: timedelta):
-    encode = {'sub': user.email, 'id': user.id}
+    encode = {'sub': user.email, 'id': user.id, 'role': user.role}
     expires = datetime.now() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
