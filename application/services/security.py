@@ -51,7 +51,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_jwt(user: User, expires_delta: timedelta):
-    encode = {'sub': user.email, 'id': user.id, 'role': user.role}
+    encode = {'sub': user.email, 'id': str(user.id), 'role': user.role}
     expires = datetime.now() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)

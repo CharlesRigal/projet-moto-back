@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.auth import CreateUserRequest, Token
+from dto.auth import CreateUserRequest, Token, PasswordResetRequest
 from models import User
 from services.security import authenticate_user, create_jwt
 from services.utils import get_db
@@ -90,3 +90,14 @@ def username_exists(db: db_dependency, username: str):
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(user: user_dependency, db: db_dependency, password_request: PasswordResetRequest):
+    user_model = db.query(User).filter(User.id == user.get('id')).first()
+
+    if not bcrypt_context.verify(password_request.old_password, user_model.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid password")
+    user_model.hashed_password = bcrypt_context.hash(password_request.new_password)
+    db.add(user_model)
+    db.commit()
