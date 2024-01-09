@@ -7,20 +7,6 @@ from sqlalchemy.orm import relationship
 from config.database import Base
 
 
-class User(Base):
-    __tablename__ = 'users'
-    id: str = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    username: str = Column(String(30), unique=True)
-    email: str = Column(String(100), unique=True)
-    hashed_password: str = Column(String(254))
-    is_active: bool = Column(Boolean, default=True)
-    role: str = Column(String(30), default="user")
-
-    friendships_sent = relationship("Friendship", back_populates="users")
-    friendships_received = relationship("Friendship", back_populates="users")
-
-
-
 class FriendShipStatus(enum.Enum):
     PENDING = 0
     ACCEPTED = 1
@@ -42,5 +28,3 @@ class Friendship(Base):
     target_user = relationship(
         "User", foreign_keys=[target_user_id], back_populates="friendships_received"
     )
-
-    users = relationship("User", back_populates="friendships")

@@ -1,17 +1,15 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from passlib.context import CryptContext
-from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.auth import CreateUserRequest, Token, PasswordResetRequest
-from models import User
+from models.users import User
 from services.security import authenticate_user, create_jwt
 from services.utils import get_db
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import jwt, JWTError
+from fastapi.security import OAuth2PasswordRequestForm
 from config.env import get_settings
 from services.security import get_current_user
 
@@ -53,6 +51,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             "msg": "Already used",
             'input': create_user_request
         }]}
+
     create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,

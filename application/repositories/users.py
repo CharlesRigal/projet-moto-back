@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from models import User
+from models.users import User
 from services.utils import get_db
 
 db_dependency = Annotated[Session, Depends(get_db)]
