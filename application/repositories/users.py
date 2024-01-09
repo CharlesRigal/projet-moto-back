@@ -1,10 +1,9 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 
-from models.models import User
+from models import User
 from services.utils import get_db
 
 db_dependency = Annotated[Session, Depends(get_db)]
