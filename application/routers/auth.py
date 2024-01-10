@@ -29,7 +29,9 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 def create_user(db: db_dependency, create_user_request: CreateUserRequest):
-    """Create a user account"""
+    """
+    Crée un compte utilisateur
+    """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_email(create_user_request.email)
     if user:
@@ -67,8 +69,9 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
 @router.post("/signin", status_code=status.HTTP_200_OK, response_model=Token)
 def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                   db: db_dependency):
-    """Log in a user and retrieve a JWT token.
-        The username is the email !!!
+    """
+    Vérifies les identifiants de l'utilisateur et récupère le Token JWT.
+    Le champs "username" correspond à l'e-mail !!
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -81,6 +84,10 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 
 @router.get("/me", status_code=status.HTTP_200_OK)
 def get_connected_user(current_user: user_dependency, db: db_dependency):
+    """
+    Récupère les infos de l'utilisateur courant.
+    À utiliser comme guard.
+    """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_id(current_user.get('id'))
     del user.hashed_password
@@ -89,7 +96,12 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
 
 @router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
 def username_exists(db: db_dependency, username: str):
-    """Check if username exists in database. To use in the register form"""
+    """
+    Vérifie si le nom d'utilisateur est disponible.
+    À utiliser dans le formulaire d'inscription.
+    404 : dispo,
+    204: pas dispo
+    """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_username(username)
     if not user:

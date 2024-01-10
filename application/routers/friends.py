@@ -24,7 +24,9 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendRequest):
-    """Send a friend request to a user"""
+    """
+    Envoi une demande d'ami à un utilisateur
+    """
     user_repository = UserRepository(db)
     target_user = user_repository.get_user_by_id(friend_request.target_user_id)
     if not target_user:
@@ -56,6 +58,11 @@ friends_status_possibilities = {
 
 @router.patch("/", status_code=status.HTTP_204_NO_CONTENT)
 def update(user: user_dependency, db: db_dependency, friend_update_request: FriendUpdateRequest):
+    """
+    Met à jour le status d'une demande d'ami.
+    Seul la personne qui reçoit la demande a la permission de l'accepter.
+    Les deux personnes ont la permission de supprimer une demande acceptée
+    """
     friend_repository = FriendRepository(db)
     friend_request = friend_repository.get_friend_by_id(friend_update_request.id)
     # the friend request doesn't exist

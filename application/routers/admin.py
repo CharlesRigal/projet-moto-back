@@ -17,6 +17,10 @@ admin_dependency = Annotated[dict, Depends(get_current_user_admin)]
 
 @router.get("/me")
 def admin_guard(db: db_dependency, user: admin_dependency):
+    """
+    Verifies si l'utilisateur courant est admin.
+    A utiliser comme guard admin
+    """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_id(user.get('id'))
     del user.hashed_password
@@ -25,6 +29,9 @@ def admin_guard(db: db_dependency, user: admin_dependency):
 
 @router.get("/users")
 def get_users(db: db_dependency, user: admin_dependency):
-    """get all the users | for development only"""
+    """
+    Récupère la liste des utilisateurs.
+    À utiliser en dev uniquement.
+    """
     user_repository = UserRepository(db)
     return user_repository.get_all()

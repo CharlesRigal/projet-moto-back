@@ -22,9 +22,10 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @router.get('/', status_code=status.HTTP_200_OK)
 def search_user_by_similar_username(db: db_dependency, username: str):
-    """ Rechercher les utilisateurs ayant un pseudo similaire à la recherche.
-     A utiliser avant d'envoyer une requete de demande d'ami
-     """
+    """
+    Rechercher les utilisateurs ayant un pseudo similaire à la recherche.
+    À utiliser avant d'envoyer une requête de demande d'ami
+    """
     user_repository = UserRepository(db)
     users = user_repository.get_users_by_similar_username(username)
     if not users:
@@ -37,7 +38,10 @@ def search_user_by_similar_username(db: db_dependency, username: str):
 
 @router.get('/{id}/friends', status_code=status.HTTP_200_OK)
 def get_friends(db: db_dependency, user: user_dependency, id: str):
-    """Get the pending friend list of the user"""
+    """
+    Récupère la liste d'ami de l'utilisateur.
+    Il n'est possible d'utiliser cette requête que sur l'utilisateur connecté.
+    """
     if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
@@ -48,7 +52,10 @@ def get_friends(db: db_dependency, user: user_dependency, id: str):
 
 @router.get('/{id}/friends/pending/sent', status_code=status.HTTP_200_OK)
 def get_pending_sent(db: db_dependency, user: user_dependency, id: str):
-    """Get the pending friend requests sent by the user"""
+    """
+    Récupère la liste de demande d'ami en attente envoi par l'utilisateur.
+    Il n'est possible d'utiliser cette requête que sur l'utilisateur connecté.
+    """
     if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
@@ -59,7 +66,10 @@ def get_pending_sent(db: db_dependency, user: user_dependency, id: str):
 
 @router.get('/{id}/friends/pending/received', status_code=status.HTTP_200_OK)
 def get_pending_received(db: db_dependency, user: user_dependency, id: str):
-    """Get the pending friend requests received by the user"""
+    """
+    Récupère la liste de demandes d'ami en attente reçu par l'utilisateur.
+    Il n'est possible d'utiliser cette requête que sur l'utilisateur connecté.
+    """
     if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
