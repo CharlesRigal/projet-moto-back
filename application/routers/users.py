@@ -25,7 +25,7 @@ def search_user_by_similar_username(db: db_dependency, username: str):
      A utiliser avant d'envoyer une requete de demande d'ami
      """
     user_repository = UserRepository(db)
-    users = user_repository.get_by_similar_username(username)
+    users = user_repository.get_users_by_similar_username(username)
     if not users:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     data = []

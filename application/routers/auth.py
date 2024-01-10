@@ -31,7 +31,7 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     """Create a user account"""
     user_repository = UserRepository(db)
-    user = user_repository.get_by_email(create_user_request.email)
+    user = user_repository.get_user_by_email(create_user_request.email)
     if user:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
@@ -43,7 +43,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             'input': create_user_request.model_dump()
         }]})
 
-    user = user_repository.get_by_username(create_user_request.username)
+    user = user_repository.get_user_by_username(create_user_request.username)
     if user:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
@@ -74,7 +74,7 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect")
     user_repository = UserRepository(db)
-    user = user_repository.get_by_email(form_data.username)
+    user = user_repository.get_user_by_email(form_data.username)
     token = create_jwt(user, timedelta(hours=DELTA_HOURS))
     return {'access_token': token, 'token_type': 'bearer'}
 
@@ -82,7 +82,7 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 @router.get("/me", status_code=status.HTTP_200_OK)
 def get_connected_user(current_user: user_dependency, db: db_dependency):
     user_repository = UserRepository(db)
-    user = user_repository.get_by_id(current_user.get('id'))
+    user = user_repository.get_user_by_id(current_user.get('id'))
     del user.hashed_password
     return user
 
@@ -91,7 +91,7 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
 def username_exists(db: db_dependency, username: str):
     """Check if username exists in database. To use in the register form"""
     user_repository = UserRepository(db)
-    user = user_repository.get_by_username(username)
+    user = user_repository.get_user_by_username(username)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
