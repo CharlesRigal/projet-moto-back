@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from models.friends import FriendsStatus
 from models.users import User
 
-
+import logging
 class UserRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -35,26 +35,27 @@ class UserRepository:
     @staticmethod
     def get_friends(user: User):
         friends = []
-        for friend in user.friendships_received:
-            if friend.type == FriendsStatus.ACCEPTED:
+        for friend in user.friends_received:
+            if friend.status == FriendsStatus.ACCEPTED:
                 friends.append(friend.requesting_user)
-        for friend in user.friendships_sent:
-            if friend.type == FriendsStatus.ACCEPTED:
+        for friend in user.friends_sent:
+            if friend.status == FriendsStatus.ACCEPTED:
                 friends.append(friend.target_user)
         return friends
 
     @staticmethod
     def get_pendings_sent(user):
         friends = []
-        for friend in user.friendships_sent:
-            if friend.type == FriendsStatus.PENDING:
+        for friend in user.friends_sent:
+            if friend.status == FriendsStatus.PENDING:
                 friends.append(friend.target_user)
         return friends
 
     @staticmethod
     def get_pendings_received(user):
         friends = []
-        for friend in user.friendships_received:
-            if friend.type == FriendsStatus.PENDING:
-                friends.append(friend.target_user)
+        for friend in user.friends_received:
+            if friend.status == FriendsStatus.PENDING:
+                friends.append(friend.requesting_user)
+
         return friends
