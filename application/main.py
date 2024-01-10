@@ -1,10 +1,11 @@
-from routers import auth, users, admin
+from routers import auth, friends, users, admin
 from fastapi import FastAPI
 import models
 from config.database import engine
 from fastapi.middleware.cors import CORSMiddleware
+from config.database import Base
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()
@@ -19,3 +20,4 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin.router)
+app.include_router(friends.router)

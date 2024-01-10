@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from config.env import get_settings
-from models import User
-import logging
+from models.users import User
+
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = get_settings().jwt_secret_key
