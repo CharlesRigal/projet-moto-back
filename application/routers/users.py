@@ -37,25 +37,30 @@ def search_user_by_similar_username(db: db_dependency, username: str):
 
 @router.get('/{id}/friends', status_code=status.HTTP_200_OK)
 def get_friends(db: db_dependency, user: user_dependency, id: str):
-    if user.get('id') != id:
+    """Get the pending friend list of the user"""
+    if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_id(user.get('id'))
     friends = UserRepository.get_friends(user)
     return friends
 
+
 @router.get('/{id}/friends/pending/sent', status_code=status.HTTP_200_OK)
 def get_pending_sent(db: db_dependency, user: user_dependency, id: str):
-    if user.get('id') != id:
+    """Get the pending friend requests sent by the user"""
+    if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_id(user.get('id'))
     friends = UserRepository.get_pendings_sent(user)
     return friends
 
+
 @router.get('/{id}/friends/pending/received', status_code=status.HTTP_200_OK)
 def get_pending_received(db: db_dependency, user: user_dependency, id: str):
-    if user.get('id') != id:
+    """Get the pending friend requests received by the user"""
+    if user.get('id') != id: # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_id(user.get('id'))
