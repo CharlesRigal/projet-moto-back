@@ -1,4 +1,4 @@
-from routers import auth, users, admin
+from routers import auth, friends, users, admin
 from fastapi import FastAPI
 import models
 from config.database import engine
@@ -20,3 +20,4 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin.router)
+app.include_router(friends.router)

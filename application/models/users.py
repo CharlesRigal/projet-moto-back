@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from config.database import Base
-from models.friendship import Friendship, FriendShipStatus
+from models.friends import Friends, FriendsStatus
 
 
 class User(Base):
@@ -17,37 +17,18 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
 
-    friendships_sent = relationship(
-        "Friendship",
+    friends_sent = relationship(
+        "Friends",
         back_populates="requesting_user",
-        foreign_keys=[Friendship.requesting_user_id]
+        foreign_keys=[Friends.requesting_user_id]
     )
-    friendships_received = relationship(
-        "Friendship",
+    friends_received = relationship(
+        "Friends",
         back_populates="target_user",
-        foreign_keys=[Friendship.target_user_id]
+        foreign_keys=[Friends.target_user_id]
     )
 
-    def get_friends(self):
-        friends = []
-        for friend in self.friendships_received:
-            if friend.type == FriendShipStatus.ACCEPTED:
-                friends.append(friend.requesting_user)
-        for friend in self.friendships_sent:
-            if friend.type == FriendShipStatus.ACCEPTED:
-                friends.append(friend.target_user)
-        return friends
 
-    def get_pendings_sent(self):
-        friends = []
-        for friend in self.friendships_sent:
-            if friend.type == FriendShipStatus.PENDING:
-                friends.append(friend.target_user)
-        return friends
 
-    def get_pendings_received(self):
-        friends = []
-        for friend in self.friendships_received:
-            if friend.type == FriendShipStatus.PENDING:
-                friends.append(friend.target_user)
-        return friends
+
+
