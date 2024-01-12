@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.friends import FriendRequest, FriendUpdateRequest
-from models.friends import Friends, FriendsStatus
+from models.friend import Friend, FriendsStatus
 from models.users import User
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
@@ -35,7 +35,7 @@ def send_friend_request(user: user_dependency, db: db_dependency, friend_request
     requesting_user = user_repository.get_user_by_id(user.get('id'))
     if requesting_user.id == target_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    friend_request_model = Friends(
+    friend_request_model = Friend(
         status=FriendsStatus.PENDING,
         requesting_user=requesting_user,
         target_user=target_user

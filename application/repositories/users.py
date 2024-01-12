@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models.friends import FriendsStatus
+from models.friend import FriendsStatus
 from models.users import User
 
 import logging

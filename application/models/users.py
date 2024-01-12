@@ -5,7 +5,8 @@ from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from config.database import Base
-from models.friends import Friends, FriendsStatus
+from models.friend import Friend, FriendsStatus
+from models.trips import Trip, trip_member_association_table
 
 
 class User(Base):
@@ -17,15 +18,25 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
 
+    trips_owned = relationship(
+        "Trip",
+        back_populates="owner",
+        foreign_keys=[Trip.owner_id]
+    )
+    trips_joined = relationship(
+        secondary=trip_member_association_table,
+        back_populates="members"
+    )
+
     friends_sent = relationship(
         "Friends",
         back_populates="requesting_user",
-        foreign_keys=[Friends.requesting_user_id]
+        foreign_keys=[Friend.requesting_user_id]
     )
     friends_received = relationship(
         "Friends",
         back_populates="target_user",
-        foreign_keys=[Friends.target_user_id]
+        foreign_keys=[Friend.target_user_id]
     )
 
 
