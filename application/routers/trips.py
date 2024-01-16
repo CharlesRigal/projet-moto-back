@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
-from dto.trips import TripCreateRequest
+from dto.trips import TripCreateRequest, MemberAddRequest
 from models.friend import Friend, FriendsStatus
 from models.trips import Trip
 from models.users import User
@@ -65,4 +65,21 @@ def get_one_trip(db: db_dependency, user: user_dependency, id: str):
                 break
         if not found:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return trip
+
+@router.post('/{id}/members', status_code=status.HTTP_201_CREATED)
+def add_member(db: db_dependency, user: user_dependency, trip_id: str, member: MemberAddRequest):
+    trip_repository = TripRepository(db)
+    user_repository = UserRepository(db)
+    trip = trip_repository.get_trip_by_id(trip_id)
+
+    if str(trip.owner_id) != user.get('id'):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    user = user_repository.get_user_by_id(user.get('id'))
+
+    friend_user = UserRepository.get_friend(user, member.id)
+    if not friend_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    trip.members.append(friend_user)
+    trip_repository.update(trip)
     return trip

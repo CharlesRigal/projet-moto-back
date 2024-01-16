@@ -12,7 +12,11 @@ class TripRepository:
         self.db.commit()
 
     def update(self, trip: Trip):
-        self.db.query(Trip).update(trip)
+        self.db.query(Trip).filter(Trip.id == trip.id).update(
+            {
+                "name": trip.name,
+            }
+        )
         self.db.commit()
 
     def get_trip_by_id(self, trip_id: str):

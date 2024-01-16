@@ -24,7 +24,8 @@ class Trip(Base):
         "User",
         foreign_keys=[owner_id],
         back_populates="trips_owned",
-        lazy="selectin")
+        lazy="selectin"
+    )
 
     members = relationship(
         "User",

@@ -22,26 +22,22 @@ class User(Base):
         "Trip",
         back_populates="owner",
         foreign_keys=[Trip.owner_id],
-        lazy="selectin"
     )
     trips_joined = relationship(
         "Trip",
         secondary=trip_member_association_table,
         back_populates="members",
-        lazy="selectin"
     )
 
     friends_sent = relationship(
         "Friend",
         back_populates="requesting_user",
         foreign_keys=[Friend.requesting_user_id],
-        lazy="selectin"
     )
     friends_received = relationship(
         "Friend",
         back_populates="target_user",
         foreign_keys=[Friend.target_user_id],
-        lazy="selectin"
     )
 
 

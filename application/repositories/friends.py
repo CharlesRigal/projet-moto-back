@@ -13,8 +13,7 @@ class FriendRepository:
         self.db.commit()
 
     def update(self, friend: Friend):
-        self.db.query(Friend).update({
-            'id': friend.id,
+        self.db.query(Friend).filter(Friend.id == friend.id).update({
             'status': friend.status
         })
         self.db.commit()

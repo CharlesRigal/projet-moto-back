@@ -59,3 +59,11 @@ class UserRepository:
                 friends.append(friend.requesting_user)
 
         return friends
+
+    @staticmethod
+    def get_friend(user: User, user2_id: str):
+        friends = UserRepository.get_friends(user)
+        for friend in friends:
+            if str(friend.id) == user2_id:
+                return friend
+        return None
