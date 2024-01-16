@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from models.friend import FriendsStatus
 
 
-class FriendRequest(BaseModel):
+class FriendCreateRequest(BaseModel):
     target_user_id: str = Field()
 
 

@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from config.database import Base
-from models.friend import Friend, FriendsStatus
+from models.friend import Friend
 from models.trips import Trip, trip_member_association_table
 
 
@@ -21,22 +21,27 @@ class User(Base):
     trips_owned = relationship(
         "Trip",
         back_populates="owner",
-        foreign_keys=[Trip.owner_id]
+        foreign_keys=[Trip.owner_id],
+        lazy="selectin"
     )
     trips_joined = relationship(
+        "Trip",
         secondary=trip_member_association_table,
-        back_populates="members"
+        back_populates="members",
+        lazy="selectin"
     )
 
     friends_sent = relationship(
-        "Friends",
+        "Friend",
         back_populates="requesting_user",
-        foreign_keys=[Friend.requesting_user_id]
+        foreign_keys=[Friend.requesting_user_id],
+        lazy="selectin"
     )
     friends_received = relationship(
-        "Friends",
+        "Friend",
         back_populates="target_user",
-        foreign_keys=[Friend.target_user_id]
+        foreign_keys=[Friend.target_user_id],
+        lazy="selectin"
     )
 
 

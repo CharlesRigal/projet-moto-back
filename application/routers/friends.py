@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.friends import FriendRequest, FriendUpdateRequest
+from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from models.friend import Friend, FriendsStatus
 from models.users import User
 from repositories.friends import FriendRepository
@@ -23,7 +23,7 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendRequest):
+def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
     """
     Envoi une demande d'ami à un utilisateur
     """
