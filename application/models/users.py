@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 
 from config.database import Base
 from models.friend import Friend
-from models.trips import Trip, trip_member_association_table
+from models.routes import Route, route_member_association_table
 
 
 class User(Base):
@@ -18,14 +18,14 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
 
-    trips_owned = relationship(
-        "Trip",
+    routes_owned = relationship(
+        "Route",
         back_populates="owner",
-        foreign_keys=[Trip.owner_id],
+        foreign_keys=[Route.owner_id],
     )
-    trips_joined = relationship(
-        "Trip",
-        secondary=trip_member_association_table,
+    routes_joined = relationship(
+        "Route",
+        secondary=route_member_association_table,
         back_populates="members",
     )
 

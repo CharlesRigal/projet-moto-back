@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from models.friend import Friend, FriendsStatus
+from models.routes import Route
 from models.users import User
 from services.security import get_current_user_admin
 from services.utils import get_db
@@ -15,6 +17,23 @@ router = APIRouter(
 db_dependency = Annotated[Session, Depends(get_db)]
 admin_dependency = Annotated[dict, Depends(get_current_user_admin)]
 
+@router.get('/generate-data')
+def generate_data(db: db_dependency):
+    user = User(username="user1", email="email@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="admin")
+    db.add(user);
+    user2 = User(username="user2", email="email2@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="user")
+    db.add(user2)
+    user3 = User(username="user3", email="email3@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="user")
+    db.add(user3)
+    db.commit()
+    friend = Friend(requesting_user=user, target_user=user2, status=FriendsStatus.ACCEPTED)
+    friend2 = Friend(requesting_user=user, target_user=user3, status=FriendsStatus.PENDING)
+    db.add(friend)
+    db.add(friend2)
+    db.commit()
+    route = Route(name="gorges de la nesque", description="balade sympa", owner=user, members=[user2])
+    db.add(route)
+    db.commit()
 @router.get("/me")
 def admin_guard(db: db_dependency, user: admin_dependency):
     """

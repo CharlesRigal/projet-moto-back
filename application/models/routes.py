@@ -4,16 +4,17 @@ from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from config.database import Base
-trip_member_association_table = Table(
-    "trip_member_association_table",
+
+route_member_association_table = Table(
+    "route_member_association_table",
     Base.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("trip_id", ForeignKey("trips.id"), primary_key=True)
+    Column("route_id", ForeignKey("routes.id"), primary_key=True)
 )
 
 
-class Trip(Base):
-    __tablename__ = 'trips'
+class Route(Base):
+    __tablename__ = 'routes'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))
     description = Column(Text())
@@ -23,13 +24,15 @@ class Trip(Base):
     owner = relationship(
         "User",
         foreign_keys=[owner_id],
-        back_populates="trips_owned",
+        back_populates="routes_owned",
         lazy="selectin"
     )
 
     members = relationship(
         "User",
-        secondary=trip_member_association_table,
-        back_populates="trips_joined",
+        secondary=route_member_association_table,
+        back_populates="routes_joined",
         lazy="selectin"
     )
+
+
