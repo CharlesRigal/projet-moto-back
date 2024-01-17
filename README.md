@@ -23,7 +23,7 @@ Pour démarrer le developpement
 Pour modifier la base de données
 
 ```
-(venv) > alembic revision --autogenerate -m
+(venv) > alembic revision --autogenerate
 
 aller recuperer l'id de la migration qui vient d'être crée dans application/alembic/versions
 

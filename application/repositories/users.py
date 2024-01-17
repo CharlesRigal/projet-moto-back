@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from models.friends import FriendsStatus
+from models.friend import FriendsStatus
 from models.users import User
 
-import logging
+
 class UserRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -11,10 +11,10 @@ class UserRepository:
     def create(self, user: User):
         self.db.add(user)
         self.db.commit()
-    def update(self, user: User):
-        self.db.query(User).update(user) # NOT TESTED !!!
-        self.db.commit()
 
+    def update(self, user: User):
+        self.db.query(User).update(user)  # NOT TESTED !!!
+        self.db.commit()
 
     def get_user_by_id(self, user_id: str):
         return self.db.query(User).filter(User.id == user_id).first()
@@ -30,7 +30,7 @@ class UserRepository:
         return self.db.query(User).filter(User.email == email).first()
 
     def get_all(self):
-        return self.db.query(User)
+        return self.db.query(User).all()
 
     @staticmethod
     def get_friends(user: User):
@@ -59,3 +59,11 @@ class UserRepository:
                 friends.append(friend.requesting_user)
 
         return friends
+
+    @staticmethod
+    def get_friend(user: User, user2_id: str):
+        friends = UserRepository.get_friends(user)
+        for friend in friends:
+            if str(friend.id) == user2_id:
+                return friend
+        return None

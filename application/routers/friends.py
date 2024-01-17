@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.friends import FriendRequest, FriendUpdateRequest
-from models.friends import Friends, FriendsStatus
+from dto.friends import FriendCreateRequest, FriendUpdateRequest
+from models.friend import Friend, FriendsStatus
 from models.users import User
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
@@ -23,7 +23,7 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendRequest):
+def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
     """
     Envoi une demande d'ami à un utilisateur.\n
     L'id de l'émetteur est l'id de l'utilisateur connecté.\n
@@ -41,7 +41,7 @@ def send_friend_request(user: user_dependency, db: db_dependency, friend_request
     # si l'utilisateur essaye de s'ajouter lui-même
     if requesting_user.id == target_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    friend_request_model = Friends(
+    friend_request_model = Friend(
         status=FriendsStatus.PENDING,
         requesting_user=requesting_user,
         target_user=target_user

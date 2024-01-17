@@ -1,4 +1,4 @@
-from routers import auth, friends, users, admin
+from routers import auth, friends, users, admin, routes
 from fastapi import FastAPI
 import models
 from config.database import engine
@@ -21,3 +21,4 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin.router)
 app.include_router(friends.router)
+app.include_router(routes.router)
