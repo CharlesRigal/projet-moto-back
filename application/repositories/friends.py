@@ -23,6 +23,6 @@ class FriendRepository:
 
     @staticmethod
     def is_part_of_friendship(user_id: str, friend: Friend):
-        if user_id == friend.target_user_id or user_id == friend.requesting_user_id:
+        if str(user_id) == str(friend.target_user_id) or str(user_id) == str(friend.requesting_user_id):
             return True
         return False

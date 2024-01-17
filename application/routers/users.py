@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from exceptions.general import SelectNotFoundError
 from models.users import User
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
@@ -50,11 +51,10 @@ def get_friends(db: db_dependency, user: user_dependency, id: str, pending_sent:
     Code 404: Si l'utilisateur connecté essaye de récupérer les amis de quelqu'un d'autre / quelqu'un qui n'existe pas\n
     Code 200: Succès\n
     """
-    if user.get('id') != id:  # if the user try to get information from someone else
+    if str(user.id) != id:  # if the user try to get information from someone else
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user_repository = UserRepository(db)
 
-    user = user_repository.get_user_by_id(user.get('id'))
     friends = []
     if not pending_sent and not pending_received:
         friends = friends + UserRepository.get_friends(user)

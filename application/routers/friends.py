@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
+from exceptions.general import SelectNotFoundError, InvalidJWTError
 from models.friend import Friend, FriendsStatus
 from models.users import User
 from repositories.friends import FriendRepository
@@ -23,24 +24,24 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def send_friend_request(user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
+def send_friend_request(requesting_user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
     """
     Envoi une demande d'ami à un utilisateur.\n
     L'id de l'émetteur est l'id de l'utilisateur connecté.\n
     Code 404:\n
-    - Si l'utilisateur cible n'existe pas\n
-    - Si l'utilisateur emetteur essaye de s'ajouter lui-même en ami\n
+    - "target-user-not-found": Si l'utilisateur cible n'existe pas\n
+    - "cant-request-oneself": Si l'utilisateur emetteur essaye de s'ajouter lui-même en ami\n
     Code 204: Succès\n
     """
     user_repository = UserRepository(db)
-    target_user = user_repository.get_user_by_id(friend_request.target_user_id)
-    if not target_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    try:
+        target_user = user_repository.get_user_by_id(friend_request.target_user_id)
+    except SelectNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="target-user-not-found")
 
-    requesting_user = user_repository.get_user_by_id(user.get('id'))
     # si l'utilisateur essaye de s'ajouter lui-même
-    if requesting_user.id == target_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if str(requesting_user.id) == str(target_user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="cant-request-oneself")
     friend_request_model = Friend(
         status=FriendsStatus.PENDING,
         requesting_user=requesting_user,
@@ -87,12 +88,12 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
 
     if friend_request.status == FriendsStatus.PENDING:
         # if the user is not the target user
-        if user.get('id') != str(friend_request.target_user_id):
+        if str(user.id) != str(friend_request.target_user_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     elif friend_request.status == FriendsStatus.ACCEPTED:
         # if the user is not the target nor the requesting user
-        if (user.get('id') != str(friend_request.target_user_id)
-                and user.get('id') != str(friend_request.requesting_user_id)):
+        if (str(user.id) != str(friend_request.target_user_id)
+                and str(user.id) != str(friend_request.requesting_user_id)):
 
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 

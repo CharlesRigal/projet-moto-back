@@ -15,7 +15,7 @@ class RouteRepository:
             self.db.add(route)
             self.db.commit()
         except SQLAlchemyError as e:
-            raise ItemCreateError
+            raise ItemCreateError()
 
     def update(self, route: Route):
         try:
@@ -29,9 +29,10 @@ class RouteRepository:
             raise ItemUpdateError()
 
     def remove_member(self, route: Route, user_to_delete: User):
-        user = RouteRepository.get_member(route, user_to_delete.id)
-        if not user:
-            raise ItemNotInListError("Non trouvé")
+        try:
+            user = RouteRepository.get_member(route, user_to_delete.id)
+        except ItemNotInListError as e:
+            raise e
         route.members.pop(route.members.index(user))
         try:
             self.update(route)
@@ -50,4 +51,4 @@ class RouteRepository:
         for member in route.members:
             if str(member.id) == str(user_id):
                 return member
-        return None
+        raise ItemNotInListError()

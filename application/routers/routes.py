@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
-from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError
+from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError, \
+    InvalidJWTError
 from models.friend import Friend, FriendsStatus
 from models.routes import Route
 from models.users import User
@@ -32,8 +33,6 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
     Code 201: succès\n
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
-    user_repository = UserRepository(db)
-    user = user_repository.get_user_by_id(user.get('id'))
     route_model = Route(
         name=route.name,
         description=route.description,
@@ -50,8 +49,6 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
 def get_all_own_route(db: db_dependency, user: user_dependency, owned: bool = False, joined: bool = False):
     """Récupère tous les voyages en lien à l'utilisateur connecté, en laissant le choix de choisir les
     voyages rejoint, possédés, ou les deux."""
-    user_repository = UserRepository(db)
-    user = user_repository.get_user_by_id(user.get('id'))
     to_return = []
     if joined:
         to_return = to_return + user.routes_joined
@@ -71,10 +68,10 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
     route = route_repository.get_route_by_id(id)
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    if user.get('id') != str(route.owner_id):
+    if str(user.id) != str(route.owner_id):
         found = False
         for _user in route.members:
-            if str(_user.id) == user.get('id'):
+            if str(_user.id) == str(user.id):
                 found = True
                 break
         if not found:
@@ -95,9 +92,8 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     route = route_repository.get_route_by_id(route_id)
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    if str(route.owner_id) != user.get('id'):
+    if str(route.owner_id) != str(user.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    user = user_repository.get_user_by_id(user.get('id'))
 
     friend_user = UserRepository.get_friend(user, member.id)
     if not friend_user:
@@ -119,17 +115,18 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
     route_repository = RouteRepository(db)
     user_repository = UserRepository(db)
     route = route_repository.get_route_by_id(route_id)
-    user = user_repository.get_user_by_id(user.get('id'))
-    user_to_delete = user_repository.get_user_by_id(member_to_delete_request.id)
+
+    try:
+        user_to_delete = user_repository.get_user_by_id(member_to_delete_request.id)
+    except SelectNotFoundError:
+        # l'utilisateur cible n'existe pas
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
     # le trajet n'existe pas
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    # l'utilisateur cible n'existe pas
-    if not user_to_delete:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
 
     # si l'utilisateur connecté n'est ni propriétaire du trajet ni l'utilisateur à supprimer
-    if user.id != route.owner.id and user.id != user_to_delete.id:
+    if str(user.id) != str(route.owner.id) and str(user.id) != str(user_to_delete.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='route-not-found')
 
     try:
