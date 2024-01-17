@@ -67,7 +67,7 @@ def get_one_trip(db: db_dependency, user: user_dependency, id: str):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return trip
 
-@router.post('/{id}/members', status_code=status.HTTP_201_CREATED)
+@router.post('/{trip_id}/members', status_code=status.HTTP_201_CREATED)
 def add_member(db: db_dependency, user: user_dependency, trip_id: str, member: MemberAddRequest):
     trip_repository = TripRepository(db)
     user_repository = UserRepository(db)
@@ -83,3 +83,8 @@ def add_member(db: db_dependency, user: user_dependency, trip_id: str, member: M
     trip.members.append(friend_user)
     trip_repository.update(trip)
     return trip
+
+@router.delete('/{trip_id}/members', status_code=status.HTTP_204_NO_CONTENT)
+def remove_member(db: db_dependency, user: user_dependency, trip_id: str, member: MemberAddRequest):
+    """Si utilisateur propriétaire du voyage: supprime un des membres
+    Si utilisateur membre du voyage: Retire ce voyage de ses voyages rejoins"""
