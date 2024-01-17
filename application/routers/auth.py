@@ -30,7 +30,10 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     """
-    Crée un compte utilisateur
+    Crée un compte utilisateur.
+    Code 422:
+    - Erreur de validation (champ incorrect, email deja utilisé, username deja utilisé, etc.)
+    Code 201: Succès
     """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_email(create_user_request.email)
@@ -70,8 +73,10 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
 def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                   db: db_dependency):
     """
-    Vérifies les identifiants de l'utilisateur et récupère le Token JWT.
-    Le champs "username" correspond à l'e-mail !!
+    Vérifies les identifiants de l'utilisateur et récupère le Token JWT.\n
+    Le champ "username" correspond à l'e-mail !!\n
+    Code 401: Mauvais identifiants\n
+    Code 200: connexion réussie
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -97,10 +102,10 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
 @router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
 def username_exists(db: db_dependency, username: str):
     """
-    Vérifie si le nom d'utilisateur est disponible.
-    À utiliser dans le formulaire d'inscription.
-    404 : dispo,
-    204: pas dispo
+    Vérifie si le nom d'utilisateur est disponible.\n
+    À utiliser dans le formulaire d'inscription.\n
+    Code 404 : dispo\n
+    Code 204: pas dispo
     """
     user_repository = UserRepository(db)
     user = user_repository.get_user_by_username(username)
