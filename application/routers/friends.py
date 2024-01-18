@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
-from exceptions.general import SelectNotFoundError, InvalidJWTError
+from exceptions.general import SelectNotFoundError, InvalidJWTError, ItemCreateError, ItemUpdateError
 from models.friend import Friend, FriendsStatus
 from models.users import User
 from repositories.friends import FriendRepository
@@ -32,6 +32,7 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
     - "target-user-not-found": Si l'utilisateur cible n'existe pas\n
     - "cant-request-oneself": Si l'utilisateur emetteur essaye de s'ajouter lui-même en ami\n
     Code 204: Succès\n
+    Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
     user_repository = UserRepository(db)
     try:
@@ -48,7 +49,10 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
         target_user=target_user
     )
     friend_repository = FriendRepository(db)
-    friend_repository.create(friend_request_model)
+    try:
+        friend_repository.create(friend_request_model)
+    except ItemCreateError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
     return "created"
 
 
@@ -70,41 +74,44 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
     Seul la personne qui reçoit la demande à la permission de l'accepter ou la refuser.\n
     Les deux personnes ont la permission de supprimer une demande acceptée\n
     Code 404 :\n
-    - Si la demande d'ami n'existe pas\n
-    - Si la demande d'ami ne concerne pas l'utilisateur connecté.\n
-    - Si l'utilisateur est concerné par la demande d'ami mais qu'il n'a pas le droit de la modifier
+    - "friend-request-not-found": Si la demande d'ami n'existe pas
+    ou la demande d'ami ne concerne pas l'utilisateur connecté.\n
+    Code 403 "not-allowed" : Si l'utilisateur est concerné par la demande d'ami mais qu'il n'a pas le droit de la modifier
     (s'il est émetteur et qu'elle n'a pas encore été acceptée)\n
-    Code 304:\n
-    - Le nouveau status est identique à l'ancien\n
-    Code 400:\n
-    - Le nouveau status est impossible à appliquer (exemple : passage d'un DENIED à PENDING)
+    Code 304 "unchanged" : Le nouveau status est identique à l'ancien\n
+    Code 400 "status-not-possible" : Le nouveau status est impossible à appliquer (exemple : passage d'un DENIED à PENDING)
     Code 204: Succès\n
+    Code 500 "update-failure": erreur dans la mise à jour au niveau de la bdd\n
+
     """
     friend_repository = FriendRepository(db)
-    friend_request = friend_repository.get_friend_by_id(friend_update_request.id)
+
     # the friend request doesn't exist
-    if not friend_request:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    try:
+        friend_request = friend_repository.get_friend_by_id(friend_update_request.id)
+    except SelectNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found")
+
+        # the connected user is not part of this friendship
+    if not FriendRepository.is_part_of_friendship(user.id, friend_request):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found")
 
     if friend_request.status == FriendsStatus.PENDING:
         # if the user is not the target user
         if str(user.id) != str(friend_request.target_user_id):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    elif friend_request.status == FriendsStatus.ACCEPTED:
-        # if the user is not the target nor the requesting user
-        if (str(user.id) != str(friend_request.target_user_id)
-                and str(user.id) != str(friend_request.requesting_user_id)):
-
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="not-allowed")
 
     # the status doesn't change
     if friend_request.status == friend_update_request.status:
-        raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED)
+        raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="unchanged")
 
     # the status change is not in the array of possibilities
     if friend_update_request.status not in friends_status_possibilities[friend_request.status]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="status-not-possible")
 
     # everything is ok, update allowed
     friend_request.status = friend_update_request.status
-    friend_repository.update(friend_request)
+    try:
+        friend_repository.update(friend_request)
+    except ItemUpdateError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
