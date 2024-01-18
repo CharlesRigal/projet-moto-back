@@ -1,7 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError
+from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError
 from models.routes import Route
 from models.users import User
 
@@ -41,7 +41,9 @@ class RouteRepository:
         return route
 
     def get_route_by_id(self, route_id: str):
-        return self.db.query(Route).filter(Route.id == route_id).first()
+        route = self.db.query(Route).filter(Route.id == route_id).first()
+        if not route:
+            raise SelectNotFoundError()
 
     def get_all(self):
         return self.db.query(Route).all()

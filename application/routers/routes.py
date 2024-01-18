@@ -65,8 +65,9 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
     - "route-not-found": le trajet n'exsite pas ou l'utilisateur n'en est ni propriétaire, ni membre\n
     """
     route_repository = RouteRepository(db)
-    route = route_repository.get_route_by_id(id)
-    if not route:
+    try:
+        route = route_repository.get_route_by_id(id)
+    except SelectNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
     if str(user.id) != str(route.owner_id):
         found = False
@@ -89,9 +90,11 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     """
     route_repository = RouteRepository(db)
     user_repository = UserRepository(db)
-    route = route_repository.get_route_by_id(route_id)
-    if not route:
+    try:
+        route = route_repository.get_route_by_id(route_id)
+    except SelectNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+
     if str(route.owner_id) != str(user.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
 
@@ -114,16 +117,17 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
     """
     route_repository = RouteRepository(db)
     user_repository = UserRepository(db)
-    route = route_repository.get_route_by_id(route_id)
+    try:
+        route = route_repository.get_route_by_id(route_id)
+    except SelectNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
 
     try:
         user_to_delete = user_repository.get_user_by_id(member_to_delete_request.id)
     except SelectNotFoundError:
         # l'utilisateur cible n'existe pas
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
-    # le trajet n'existe pas
-    if not route:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+
 
     # si l'utilisateur connecté n'est ni propriétaire du trajet ni l'utilisateur à supprimer
     if str(user.id) != str(route.owner.id) and str(user.id) != str(user_to_delete.id):
