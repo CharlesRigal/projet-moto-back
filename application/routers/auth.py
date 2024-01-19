@@ -41,9 +41,6 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     user = None
     try:
         user = user_repository.get_user_by_email(create_user_request.email)
-    except SelectNotFoundError as e:
-        pass
-    if user:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
             "loc": [
@@ -53,11 +50,14 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             "msg": "Already used",
             'input': create_user_request.model_dump()
         }]})
-    try:
-        user = user_repository.get_user_by_username(create_user_request.username)
     except SelectNotFoundError as e:
         pass
-    if user:
+    except HTTPException as e:
+        raise e
+
+    try:
+        user = user_repository.get_user_by_username(create_user_request.username)
+        # if the username already exists it will raise an exception
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
             "loc": [
@@ -67,6 +67,10 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             "msg": "Already used",
             'input': create_user_request.model_dump()
         }]})
+    except SelectNotFoundError as e:
+        pass
+    except HTTPException as e:
+        raise e
 
     create_user_model = User(
         email=create_user_request.email,
@@ -86,17 +90,17 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     """
     Vérifies les identifiants de l'utilisateur et récupère le Token JWT.\n
     Le champ "username" correspond à l'e-mail !!\n
-    Code 401: Mauvais identifiants\n
+    Code 401 "incorrect-id" : Mauvais identifiants\n
     Code 200: connexion réussie
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id")
     user_repository = UserRepository(db)
     try:
         user = user_repository.get_user_by_email(form_data.username)
     except SelectNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id")
     token = create_jwt(user, timedelta(hours=DELTA_HOURS))
     return {'access_token': token, 'token_type': 'bearer'}
 
