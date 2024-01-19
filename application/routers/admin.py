@@ -1,8 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
 
+from exceptions.general import SelectNotFoundError
 from models.friend import Friend, FriendsStatus
 from models.routes import Route
 from models.users import User
@@ -41,7 +43,11 @@ def admin_guard(db: db_dependency, user: admin_dependency):
     A utiliser comme guard admin
     """
     user_repository = UserRepository(db)
-    user = user_repository.get_user_by_id(user.get('id'))
+    try:
+        user = user_repository.get_user_by_id(user.id)
+    except SelectNotFoundError:
+        # this is not supposed to happen because admin_dependency already fetch the user and raise an exception if not found
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="error")
     del user.hashed_password
     return user
 

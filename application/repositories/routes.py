@@ -1,7 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError
+from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError
 from models.routes import Route
 from models.users import User
 
@@ -15,7 +15,7 @@ class RouteRepository:
             self.db.add(route)
             self.db.commit()
         except SQLAlchemyError as e:
-            raise ItemCreateError
+            raise ItemCreateError()
 
     def update(self, route: Route):
         try:
@@ -29,9 +29,10 @@ class RouteRepository:
             raise ItemUpdateError()
 
     def remove_member(self, route: Route, user_to_delete: User):
-        user = RouteRepository.get_member(route, user_to_delete.id)
-        if not user:
-            raise ItemNotInListError("Non trouvé")
+        try:
+            user = RouteRepository.get_member(route, user_to_delete.id)
+        except ItemNotInListError as e:
+            raise e
         route.members.pop(route.members.index(user))
         try:
             self.update(route)
@@ -40,7 +41,9 @@ class RouteRepository:
         return route
 
     def get_route_by_id(self, route_id: str):
-        return self.db.query(Route).filter(Route.id == route_id).first()
+        route = self.db.query(Route).filter(Route.id == route_id).first()
+        if not route:
+            raise SelectNotFoundError()
 
     def get_all(self):
         return self.db.query(Route).all()
@@ -50,4 +53,4 @@ class RouteRepository:
         for member in route.members:
             if str(member.id) == str(user_id):
                 return member
-        return None
+        raise ItemNotInListError()

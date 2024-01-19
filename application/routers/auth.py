@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.auth import CreateUserRequest, Token, PasswordResetRequest
+from exceptions.general import ItemCreateError, SelectNotFoundError
 from models.users import User
 from repositories.users import UserRepository
 from services.security import authenticate_user, create_jwt
@@ -34,10 +35,12 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     Code 422:
     - Erreur de validation (champ incorrect, email deja utilisé, username deja utilisé, etc.)
     Code 201: Succès
+    Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
     user_repository = UserRepository(db)
-    user = user_repository.get_user_by_email(create_user_request.email)
-    if user:
+    user = None
+    try:
+        user = user_repository.get_user_by_email(create_user_request.email)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
             "loc": [
@@ -47,9 +50,14 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             "msg": "Already used",
             'input': create_user_request.model_dump()
         }]})
+    except SelectNotFoundError as e:
+        pass
+    except HTTPException as e:
+        raise e
 
-    user = user_repository.get_user_by_username(create_user_request.username)
-    if user:
+    try:
+        user = user_repository.get_user_by_username(create_user_request.username)
+        # if the username already exists it will raise an exception
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
             "loc": [
@@ -59,13 +67,20 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
             "msg": "Already used",
             'input': create_user_request.model_dump()
         }]})
+    except SelectNotFoundError as e:
+        pass
+    except HTTPException as e:
+        raise e
 
     create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,
         hashed_password=bcrypt_context.hash(create_user_request.password),
     )
-    user_repository.create(create_user_model)
+    try:
+        user_repository.create(create_user_model)
+    except ItemCreateError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
     return {'success': True}
 
 
@@ -75,14 +90,17 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     """
     Vérifies les identifiants de l'utilisateur et récupère le Token JWT.\n
     Le champ "username" correspond à l'e-mail !!\n
-    Code 401: Mauvais identifiants\n
+    Code 401 "incorrect-id" : Mauvais identifiants\n
     Code 200: connexion réussie
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id")
     user_repository = UserRepository(db)
-    user = user_repository.get_user_by_email(form_data.username)
+    try:
+        user = user_repository.get_user_by_email(form_data.username)
+    except SelectNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id")
     token = create_jwt(user, timedelta(hours=DELTA_HOURS))
     return {'access_token': token, 'token_type': 'bearer'}
 
@@ -93,10 +111,7 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
     Récupère les infos de l'utilisateur courant.
     À utiliser comme guard.
     """
-    user_repository = UserRepository(db)
-    user = user_repository.get_user_by_id(current_user.get('id'))
-    del user.hashed_password
-    return user
+    return current_user
 
 
 @router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
@@ -108,8 +123,9 @@ def username_exists(db: db_dependency, username: str):
     Code 204: pas dispo
     """
     user_repository = UserRepository(db)
-    user = user_repository.get_user_by_username(username)
-    if not user:
+    try:
+        user_repository.get_user_by_username(username)
+    except SelectNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
