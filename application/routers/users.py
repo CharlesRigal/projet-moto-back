@@ -38,28 +38,3 @@ def search_user_by_similar_username(db: db_dependency, username: str):
     return data
 
 
-@router.get('/{id}/friends', status_code=status.HTTP_200_OK)
-def get_friends(db: db_dependency, user: user_dependency, id: str, pending_sent: bool = None,
-                pending_received: bool = None):
-    """
-    Récupère la liste d'ami de l'utilisateur.\n
-    Il n'est possible d'utiliser cette requête que sur l'utilisateur connecté.\n
-    Si pending_sent = False et pending_received = False: renvoie la liste d'amis.\n
-    Si pending_sent = True : renvoie la liste des demandes d'amis envoyés en attente.\n
-    Si pending_received = True : renvoie la liste des demandes d'amis recues en attente.\n
-    Il est possible de combiner pending_sent = True et pending_received = True\n
-    Code 404: Si l'utilisateur connecté essaye de récupérer les amis de quelqu'un d'autre / quelqu'un qui n'existe pas\n
-    Code 200: Succès\n
-    """
-    if str(user.id) != id:  # if the user try to get information from someone else
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    user_repository = UserRepository(db)
-
-    friends = []
-    if not pending_sent and not pending_received:
-        friends = friends + UserRepository.get_friends(user)
-    if pending_sent:
-        friends = friends + UserRepository.get_pendings_sent(user)
-    if pending_received:
-        friends = friends + UserRepository.get_pendings_received(user)
-    return friends
