@@ -54,10 +54,18 @@ class UserRepository:
         friends = []
         for friend in user.friends_received:
             if friend.status == FriendsStatus.ACCEPTED:
-                friends.append(friend.requesting_user)
+                friends.append( {
+                    "user" :friend.requesting_user,
+                    "friendship_id": friend.id,
+                    "status": friend.status
+                })
         for friend in user.friends_sent:
             if friend.status == FriendsStatus.ACCEPTED:
-                friends.append(friend.target_user)
+                friends.append( {
+                    "user" :friend.target_user,
+                    "friendship_id": friend.id,
+                    "status": friend.status
+                })
         return friends
 
     @staticmethod
@@ -65,7 +73,11 @@ class UserRepository:
         friends = []
         for friend in user.friends_sent:
             if friend.status == FriendsStatus.PENDING:
-                friends.append(friend.target_user)
+                friends.append( {
+                    "user" :friend.target_user,
+                    "friendship_id": friend.id,
+                    "status": friend.status
+                })
         return friends
 
     @staticmethod
@@ -73,7 +85,11 @@ class UserRepository:
         friends = []
         for friend in user.friends_received:
             if friend.status == FriendsStatus.PENDING:
-                friends.append(friend.requesting_user)
+                friends.append( {
+                    "user" :friend.requesting_user,
+                    "friendship_id": friend.id,
+                    "status": friend.status
+                })
 
         return friends
 
