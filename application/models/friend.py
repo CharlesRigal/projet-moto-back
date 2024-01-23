@@ -26,9 +26,10 @@ class Friend(Base):
         "User",
         foreign_keys=[requesting_user_id],
         back_populates="friends_sent",
-        lazy = "selectin"
     )
     target_user = relationship(
-        "User", foreign_keys=[target_user_id], back_populates="friends_received", lazy="selectin"
+        "User",
+        foreign_keys=[target_user_id],
+        back_populates="friends_received",
     )
 

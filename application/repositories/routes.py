@@ -14,7 +14,7 @@ class RouteRepository:
         try:
             self.db.add(route)
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             raise ItemCreateError()
 
     def update(self, route: Route):
@@ -22,10 +22,11 @@ class RouteRepository:
             self.db.query(Route).filter(Route.id == route.id).update(
                 {
                     "name": route.name,
+                    "waypoints": route.waypoints
                 }
             )
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             raise ItemUpdateError()
 
     def remove_member(self, route: Route, user_to_delete: User):
@@ -44,6 +45,7 @@ class RouteRepository:
         route = self.db.query(Route).filter(Route.id == route_id).first()
         if not route:
             raise SelectNotFoundError()
+        return route
 
     def get_all(self):
         return self.db.query(Route).all()

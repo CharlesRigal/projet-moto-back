@@ -2,9 +2,8 @@ import uuid
 
 from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship
-
 from config.database import Base
-
+from models.waypoint import Waypoint
 route_member_association_table = Table(
     "route_member_association_table",
     Base.metadata,
@@ -25,14 +24,18 @@ class Route(Base):
         "User",
         foreign_keys=[owner_id],
         back_populates="routes_owned",
-        lazy="selectin"
     )
 
     members = relationship(
         "User",
         secondary=route_member_association_table,
         back_populates="routes_joined",
-        lazy="selectin"
+    )
+
+    waypoints = relationship(
+        "Waypoint",
+        back_populates="route",
+        foreign_keys=[Waypoint.route_id],
     )
 
 
