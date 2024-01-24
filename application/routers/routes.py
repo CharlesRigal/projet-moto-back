@@ -203,29 +203,17 @@ def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, wayp
 
     except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
+
+    # l'ordre a été changé, il faut l'échanger avec un autre Waypoint
     if original_waypoint.order != waypoint.order:
         try:
             other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
         except ItemNotInListError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
         original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
-        try:
-            waypoint_repository.update(original_waypoint)
-        except ItemUpdateError:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
-        try:
-            waypoint_repository.update(other_waypoint)
-        except ItemUpdateError:
-            # if an error occured, attempt to revert the changes
-            original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint,
-                                                                               other_waypoint)
-            try:
-                waypoint_repository.update(original_waypoint)
-                waypoint_repository.update(other_waypoint)
-            except ItemUpdateError:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+
     original_waypoint.name = waypoint.name
     original_waypoint.latitude = waypoint.latitude
     original_waypoint.longitude = waypoint.longitude
-    waypoint_repository.update(original_waypoint)
+    db.commit()
+    # waypoint_repository.update(original_waypoint)
