@@ -15,6 +15,7 @@ class FriendRepository:
             self.db.add(friends)
             self.db.commit()
         except SQLAlchemyError as e:
+            self.db.rollback()
             raise ItemCreateError()
     def update(self, friend: Friend):
         try:
@@ -25,6 +26,7 @@ class FriendRepository:
             )
             self.db.commit()
         except SQLAlchemyError as e:
+            self.db.rollback()
             raise ItemUpdateError()
     def get_friend_by_id(self, id: str):
         friend = self.db.query(Friend).filter(Friend.id == id).first()

@@ -15,6 +15,7 @@ class UserRepository:
             self.db.add(user)
             self.db.commit()
         except SQLAlchemyError as e:
+            self.db.rollback()
             raise ItemCreateError()
 
     # def update(self, user: User):
@@ -22,6 +23,7 @@ class UserRepository:
     #         self.db.query(User).update(user)  # NOT TESTED !!!
     #         self.db.commit()
     #     except SQLAlchemyError as e:
+    #         self.db.rollback()
     #         raise ItemUpdateError()
 
     def get_user_by_id(self, user_id: str):

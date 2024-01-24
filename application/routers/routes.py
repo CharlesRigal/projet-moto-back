@@ -179,7 +179,7 @@ def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypo
     return waypoint_model
 
 
-@router.patch('/{route_id}')
+@router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
 def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint: WayPointEditRequest):
     """Permet d'éditer un point de trajet. Cela inclut l'echanger de l'ordre avec un autre point de trajet.\n
     Code 400: "order-out-of-range" : le nouvel ordre ne correspond pas a un autre point de trajet """
@@ -189,12 +189,12 @@ def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, wayp
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+
     try:
         RouteRepository.get_member(route, user.id)
     except ItemNotInListError:
         if route.owner_id != user.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-
     try:
         original_waypoint = waypoint_repository.get_waypoint_by_id(waypoint.id)
 
@@ -203,14 +203,29 @@ def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, wayp
 
     except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
-    route.waypoints
-    return route
-
     if original_waypoint.order != waypoint.order:
         try:
-            other_waypoint = WaypointRepository.get_waypoint_by_order(route, waypoint.order)
+            other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
         except ItemNotInListError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
-        route = WaypointRepository.swap_waypoints(original_waypoint, other_waypoint)
-
-    return waypoint
+        original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
+        try:
+            waypoint_repository.update(original_waypoint)
+        except ItemUpdateError:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+        try:
+            waypoint_repository.update(other_waypoint)
+        except ItemUpdateError:
+            # if an error occured, attempt to revert the changes
+            original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint,
+                                                                               other_waypoint)
+            try:
+                waypoint_repository.update(original_waypoint)
+                waypoint_repository.update(other_waypoint)
+            except ItemUpdateError:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+    original_waypoint.name = waypoint.name
+    original_waypoint.latitude = waypoint.latitude
+    original_waypoint.longitude = waypoint.longitude
+    waypoint_repository.update(original_waypoint)

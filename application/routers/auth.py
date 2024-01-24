@@ -111,8 +111,7 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
     Récupère les infos de l'utilisateur courant.
     À utiliser comme guard.
     """
-    return current_user
-
+    return current_user.to_dict()
 
 @router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
 def username_exists(db: db_dependency, username: str):

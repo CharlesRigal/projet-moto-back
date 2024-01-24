@@ -1,10 +1,12 @@
 import enum
+import json
 import uuid
 
 from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from config.database import Base
+from sqlalchemy_serializer import SerializerMixin
 
 
 class FriendsStatus(enum.Enum):
@@ -14,8 +16,12 @@ class FriendsStatus(enum.Enum):
     REMOVED = 3
 
 
-class Friend(Base):
+class Friend(Base, SerializerMixin):
     __tablename__ = 'friends'
+    serialize_rules = (
+        '-requesting_user.friends_sent', '-requesting_user.friends_received',
+        '-target_user.friends_sent', '-target_user.friends_received'
+                       )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     status = Column(Enum(FriendsStatus))
 
@@ -26,10 +32,14 @@ class Friend(Base):
         "User",
         foreign_keys=[requesting_user_id],
         back_populates="friends_sent",
+        lazy="selectin",
+        join_depth=1
     )
     target_user = relationship(
         "User",
         foreign_keys=[target_user_id],
         back_populates="friends_received",
+        lazy="selectin",
+        join_depth=1
     )
 

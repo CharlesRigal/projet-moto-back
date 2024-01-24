@@ -16,6 +16,7 @@ class WaypointRepository:
             self.db.add(waypoint)
             self.db.commit()
         except SQLAlchemyError:
+            self.db.rollback()
             raise ItemCreateError()
 
     def get_waypoint_by_id(self, route_id: str):
@@ -24,18 +25,28 @@ class WaypointRepository:
             raise SelectNotFoundError()
         return route
 
-    @staticmethod
-    def swap_waypoints(self, route: Route, waypoint1: Waypoint, waypoint2: Waypoint):
-        index_waypoint1 = route.waypoints.index(waypoint1)
-        index_waypoint2 = route.waypoints.index(waypoint2)
-        route.waypoints[index_waypoint1].order, route.waypoints[index_waypoint2].order = route.waypoints[
-            index_waypoint2].order, \
-            route.waypoints[index_waypoint1].order
-        return route
+    def update(self, waypoint: Waypoint):
+        try:
+            self.db.query(Waypoint).filter(Waypoint.id == waypoint.id).update(
+                {
+                    "name": waypoint.name,
+                    "latitude": waypoint.latitude,
+                    "longitude": waypoint.latitude,
+                    "order": waypoint.order
+                }
+            )
+            self.db.commit()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise ItemUpdateError()
 
     @staticmethod
-    def get_waypoint_by_order(route: Route, order: int):
-        for waypoint in route.waypoints:
-            if waypoint.order == order:
-                return waypoint
-        raise ItemNotInListError()
+    def swap_waypoints(route: Route, waypoint1: Waypoint, waypoint2: Waypoint):
+        waypoint1.order, waypoint2.order = waypoint2.order, waypoint1.order
+        return waypoint1, waypoint2
+
+    def get_waypoint_by_order(self, route: Route, order: int):
+        waypoint = self.db.query(Waypoint).filter(Waypoint.route_id == route.id and Waypoint.order == order).first()
+        if not waypoint:
+            raise SelectNotFoundError()
+        return waypoint
