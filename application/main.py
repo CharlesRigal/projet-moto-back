@@ -1,14 +1,13 @@
+import os
+
 from routers import auth, friends, users, admin, routes
 from fastapi import FastAPI
 import uvicorn
 from config.database import engine
 from fastapi.middleware.cors import CORSMiddleware
-import dotenv
 from config.database import Base
-from starter.StandaloneApplication import number_of_workers, handler_app, StandaloneApplication
 
 Base.metadata.create_all(bind=engine)
-env = dotenv.load_dotenv()
 
 
 app = FastAPI()
@@ -27,11 +26,12 @@ app.include_router(friends.router)
 app.include_router(routes.router)
 
 if __name__ == "__main__":
-    if env["DEBUG"]:
-        uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
-    else:
+    if os.environ.get("ENV") == "development":
+        uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True)
+    elif os.environ.get("ENV") == "production":
+        from starter.StandaloneApplication import number_of_workers, handler_app, StandaloneApplication
         options = {
-            'bind': '%s:%s' % ('0.0.0.0', '8080'),
+            'bind': '%s:%s' % ('0.0.0.0', '8888'),
             'workers': number_of_workers(),
         }
         StandaloneApplication(handler_app, options).run()
