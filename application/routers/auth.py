@@ -135,4 +135,3 @@ def username_exists(db: db_dependency, username: str):
 #     if not bcrypt_context.verify(password_request.old_password, user_model.hashed_password):
 #         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid password")
 #     user_model.hashed_password = bcrypt_context.hash(password_request.new_password)
-#     user_repository.update(user_model) # NOT TESTED !!!

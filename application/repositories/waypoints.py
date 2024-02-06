@@ -25,20 +25,6 @@ class WaypointRepository:
             raise SelectNotFoundError()
         return route
 
-    def update(self, waypoint: Waypoint):
-        try:
-            self.db.query(Waypoint).filter(Waypoint.id == waypoint.id).update(
-                {
-                    "name": waypoint.name,
-                    "latitude": waypoint.latitude,
-                    "longitude": waypoint.latitude,
-                    "order": waypoint.order
-                }
-            )
-            self.db.commit()
-        except SQLAlchemyError as e:
-            self.db.rollback()
-            raise ItemUpdateError()
 
     @staticmethod
     def swap_waypoints(route: Route, waypoint1: Waypoint, waypoint2: Waypoint):

@@ -18,13 +18,6 @@ class UserRepository:
             self.db.rollback()
             raise ItemCreateError()
 
-    # def update(self, user: User):
-    #     try:
-    #         self.db.query(User).update(user)  # NOT TESTED !!!
-    #         self.db.commit()
-    #     except SQLAlchemyError as e:
-    #         self.db.rollback()
-    #         raise ItemUpdateError()
 
     def get_user_by_id(self, user_id: str):
         user = self.db.query(User).filter(User.id == user_id).first()
@@ -56,18 +49,10 @@ class UserRepository:
         friends = []
         for friend in user.friends_received:
             if friend.status == FriendsStatus.ACCEPTED:
-                friends.append( {
-                    "user" :friend.requesting_user,
-                    "friendship_id": friend.id,
-                    "status": friend.status
-                })
+                friends.append(friend)
         for friend in user.friends_sent:
             if friend.status == FriendsStatus.ACCEPTED:
-                friends.append( {
-                    "user" :friend.target_user,
-                    "friendship_id": friend.id,
-                    "status": friend.status
-                })
+                friends.append(friend)
         return friends
 
     @staticmethod
@@ -75,11 +60,7 @@ class UserRepository:
         friends = []
         for friend in user.friends_sent:
             if friend.status == FriendsStatus.PENDING:
-                friends.append( {
-                    "user" :friend.target_user,
-                    "friendship_id": friend.id,
-                    "status": friend.status
-                })
+                friends.append(friend)
         return friends
 
     @staticmethod
@@ -87,11 +68,7 @@ class UserRepository:
         friends = []
         for friend in user.friends_received:
             if friend.status == FriendsStatus.PENDING:
-                friends.append( {
-                    "user" :friend.requesting_user,
-                    "friendship_id": friend.id,
-                    "status": friend.status
-                })
+                friends.append(friend)
 
         return friends
 

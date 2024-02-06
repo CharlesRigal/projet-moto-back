@@ -17,9 +17,9 @@ route_member_association_table = Table(
 class Route(Base, SerializerMixin):
     __tablename__ = 'routes'
     serialize_rules = [
-        '-owner.routes_joined', '-owner.routes_owned',
-        '-members.routes_joined', '-members.routes_owned',
-        '-waypoints.route'
+        '-owner.routes_joined', '-owner.routes_owned', '-owner.friends_sent', '-owner.friends_received',  '-owner.role',  '-owner.email',
+        '-members.routes_joined', '-members.routes_owned', '-members.friends_sent', '-members.friends_received', '-members.role', '-members.email',
+        '-waypoints.route',
     ]
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))

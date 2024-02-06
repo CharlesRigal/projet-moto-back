@@ -18,17 +18,7 @@ class RouteRepository:
             self.db.rollback()
             raise ItemCreateError()
 
-    def update(self, route: Route):
-        try:
-            self.db.query(Route).filter(Route.id == route.id).update(
-                {
-                    "name": route.name,
-                }
-            )
-            self.db.commit()
-        except SQLAlchemyError as e:
-            self.db.rollback()
-            raise ItemUpdateError()
+
 
     def remove_member(self, route: Route, user_to_delete: User):
         try:
@@ -36,10 +26,6 @@ class RouteRepository:
         except ItemNotInListError as e:
             raise e
         route.members.pop(route.members.index(user))
-        try:
-            self.update(route)
-        except ItemUpdateError as e:
-            raise e
         return route
 
     def get_route_by_id(self, route_id: str):

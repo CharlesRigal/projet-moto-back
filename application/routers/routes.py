@@ -60,7 +60,10 @@ def get_all_own_route(db: db_dependency, user: user_dependency, owned: bool = Fa
         to_return = to_return + user.routes_joined
     if owned:
         to_return = to_return + user.routes_owned
-    return to_return
+    to_return_dict = []
+    for to_return_ in to_return:
+        to_return_dict.append(to_return_.to_dict())
+    return to_return_dict
 
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
@@ -83,7 +86,7 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
                 break
         if not found:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    return route
+    return route.to_dict()
 
 
 @router.post('/{route_id}/members', status_code=status.HTTP_201_CREATED)
@@ -108,7 +111,11 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     if not friend_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-route")
     route.members.append(friend_user)
-    route_repository.update(route)
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
     return route
 
 
@@ -139,17 +146,19 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='route-not-found')
 
     try:
-        route_repository.remove_member(route, user_to_delete)
+        route = route_repository.remove_member(route, user_to_delete)
     except ItemNotInListError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
-    except ItemUpdateError as e:
+    try:
+        db.commit()
+    except SQLAlchemyError:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
 
     return route.members
 
 
 @router.post('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
-def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: WayPointCreateRequest):
+def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: list[WayPointCreateRequest]):
     """
     Ajoute un point a un itinéraire
     Code 200: point crée
@@ -168,14 +177,15 @@ def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypo
     except ItemNotInListError:
         if route.owner_id != user.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    waypoint_model = Waypoint(
-        name=waypoint_request.name,
-        latitude=waypoint_request.latitude,
-        longitude=waypoint_request.longitude,
-        order=len(route.waypoints),
-        route=route
-    )
-    waypoint_repository.create(waypoint_model)
+    for waypoint in waypoint_request:
+        waypoint_model = Waypoint(
+            name=waypoint.name,
+            latitude=waypoint.latitude,
+            longitude=waypoint.longitude,
+            order=len(route.waypoints),
+            route=route
+        )
+        waypoint_repository.create(waypoint_model)
     return waypoint_model
 
 
@@ -216,4 +226,4 @@ def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, wayp
     original_waypoint.latitude = waypoint.latitude
     original_waypoint.longitude = waypoint.longitude
     db.commit()
-    # waypoint_repository.update(original_waypoint)
+
