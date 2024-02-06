@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -112,8 +113,9 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
     # everything is ok, update allowed
     friend_request.status = friend_update_request.status
     try:
-        friend_repository.update(friend_request)
-    except ItemUpdateError as e:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
 
 @router.get('/', status_code=status.HTTP_200_OK)
@@ -129,9 +131,6 @@ def get_friends(db: db_dependency, user: user_dependency,pending_sent: bool = No
     Code 404: Si l'utilisateur connecté essaye de récupérer les amis de quelqu'un d'autre / quelqu'un qui n'existe pas\n
     Code 200: Succès\n
     """
-
-
-
     friends = []
     if not pending_sent and not pending_received:
         friends = friends + UserRepository.get_friends(user)
@@ -139,4 +138,7 @@ def get_friends(db: db_dependency, user: user_dependency,pending_sent: bool = No
         friends = friends + UserRepository.get_pendings_sent(user)
     if pending_received:
         friends = friends + UserRepository.get_pendings_received(user)
-    return friends
+    to_return_friends = []
+    for friend in friends:
+        to_return_friends.append(friend.to_dict())
+    return to_return_friends

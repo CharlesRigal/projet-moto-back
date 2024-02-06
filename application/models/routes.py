@@ -2,8 +2,9 @@ import uuid
 
 from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship
-
 from config.database import Base
+from models.waypoint import Waypoint
+from sqlalchemy_serializer import SerializerMixin
 
 route_member_association_table = Table(
     "route_member_association_table",
@@ -13,8 +14,13 @@ route_member_association_table = Table(
 )
 
 
-class Route(Base):
+class Route(Base, SerializerMixin):
     __tablename__ = 'routes'
+    serialize_rules = [
+        '-owner.routes_joined', '-owner.routes_owned', '-owner.friends_sent', '-owner.friends_received',  '-owner.role',  '-owner.email',
+        '-members.routes_joined', '-members.routes_owned', '-members.friends_sent', '-members.friends_received', '-members.role', '-members.email',
+        '-waypoints.route',
+    ]
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))
     description = Column(Text())
@@ -25,14 +31,22 @@ class Route(Base):
         "User",
         foreign_keys=[owner_id],
         back_populates="routes_owned",
-        lazy="selectin"
+        lazy="selectin",
+
     )
 
     members = relationship(
         "User",
         secondary=route_member_association_table,
         back_populates="routes_joined",
-        lazy="selectin"
+        lazy="selectin",
+    )
+
+    waypoints = relationship(
+        "Waypoint",
+        back_populates="route",
+        foreign_keys=[Waypoint.route_id],
+        lazy="selectin",
     )
 
 

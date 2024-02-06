@@ -111,8 +111,7 @@ def get_connected_user(current_user: user_dependency, db: db_dependency):
     Récupère les infos de l'utilisateur courant.
     À utiliser comme guard.
     """
-    return current_user
-
+    return current_user.to_dict()
 
 @router.get('/username/{username}', status_code=status.HTTP_204_NO_CONTENT)
 def username_exists(db: db_dependency, username: str):
@@ -136,4 +135,3 @@ def username_exists(db: db_dependency, username: str):
 #     if not bcrypt_context.verify(password_request.old_password, user_model.hashed_password):
 #         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid password")
 #     user_model.hashed_password = bcrypt_context.hash(password_request.new_password)
-#     user_repository.update(user_model) # NOT TESTED !!!

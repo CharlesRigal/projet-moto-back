@@ -15,17 +15,10 @@ class FriendRepository:
             self.db.add(friends)
             self.db.commit()
         except SQLAlchemyError as e:
+            self.db.rollback()
             raise ItemCreateError()
-    def update(self, friend: Friend):
-        try:
-            self.db.query(Friend).filter(Friend.id == friend.id).update(
-                {
-                    'status': friend.status
-                }
-            )
-            self.db.commit()
-        except SQLAlchemyError as e:
-            raise ItemUpdateError()
+
+
     def get_friend_by_id(self, id: str):
         friend = self.db.query(Friend).filter(Friend.id == id).first()
         if not friend:

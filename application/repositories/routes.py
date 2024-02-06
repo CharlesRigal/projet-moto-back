@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError
 from models.routes import Route
 from models.users import User
-
+import logging
 
 class RouteRepository:
     def __init__(self, db: Session):
@@ -14,19 +14,11 @@ class RouteRepository:
         try:
             self.db.add(route)
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
+            self.db.rollback()
             raise ItemCreateError()
 
-    def update(self, route: Route):
-        try:
-            self.db.query(Route).filter(Route.id == route.id).update(
-                {
-                    "name": route.name,
-                }
-            )
-            self.db.commit()
-        except SQLAlchemyError as e:
-            raise ItemUpdateError()
+
 
     def remove_member(self, route: Route, user_to_delete: User):
         try:
@@ -34,16 +26,13 @@ class RouteRepository:
         except ItemNotInListError as e:
             raise e
         route.members.pop(route.members.index(user))
-        try:
-            self.update(route)
-        except ItemUpdateError as e:
-            raise e
         return route
 
     def get_route_by_id(self, route_id: str):
         route = self.db.query(Route).filter(Route.id == route_id).first()
         if not route:
             raise SelectNotFoundError()
+        return route
 
     def get_all(self):
         return self.db.query(Route).all()

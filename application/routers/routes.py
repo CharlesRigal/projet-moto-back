@@ -1,18 +1,23 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
+from dto.waypoints import WayPointCreateRequest, WayPointEditRequest
 from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError, \
     InvalidJWTError
 from models.friend import Friend, FriendsStatus
 from models.routes import Route
+from models.waypoint import Waypoint
 from models.users import User
 from repositories.friends import FriendRepository
 from repositories.routes import RouteRepository
 from repositories.users import UserRepository
+from repositories.waypoints import WaypointRepository
 from services.security import get_current_user
 from services.utils import get_db
 
@@ -45,6 +50,7 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
     except ItemCreateError:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
 
+
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_all_own_route(db: db_dependency, user: user_dependency, owned: bool = False, joined: bool = False):
     """Récupère tous les voyages en lien à l'utilisateur connecté, en laissant le choix de choisir les
@@ -54,7 +60,10 @@ def get_all_own_route(db: db_dependency, user: user_dependency, owned: bool = Fa
         to_return = to_return + user.routes_joined
     if owned:
         to_return = to_return + user.routes_owned
-    return to_return
+    to_return_dict = []
+    for to_return_ in to_return:
+        to_return_dict.append(to_return_.to_dict())
+    return to_return_dict
 
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
@@ -77,7 +86,7 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
                 break
         if not found:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    return route
+    return route.to_dict()
 
 
 @router.post('/{route_id}/members', status_code=status.HTTP_201_CREATED)
@@ -102,7 +111,11 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     if not friend_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-route")
     route.members.append(friend_user)
-    route_repository.update(route)
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
     return route
 
 
@@ -128,16 +141,89 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
         # l'utilisateur cible n'existe pas
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
 
-
     # si l'utilisateur connecté n'est ni propriétaire du trajet ni l'utilisateur à supprimer
     if str(user.id) != str(route.owner.id) and str(user.id) != str(user_to_delete.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='route-not-found')
 
     try:
-        route_repository.remove_member(route, user_to_delete)
+        route = route_repository.remove_member(route, user_to_delete)
     except ItemNotInListError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
-    except ItemUpdateError as e:
+    try:
+        db.commit()
+    except SQLAlchemyError:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
 
     return route.members
+
+
+@router.post('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
+def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: list[WayPointCreateRequest]):
+    """
+    Ajoute un point a un itinéraire
+    Code 200: point crée
+    Code 404:
+    "route-not-found": la route n'existe pas ou l'utilisateur n'a pas les droits dessus
+    """
+    route_repository = RouteRepository(db)
+    waypoint_repository = WaypointRepository(db)
+    try:
+        route = route_repository.get_route_by_id(route_id)
+    except SelectNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+
+    try:
+        RouteRepository.get_member(route, user.id)
+    except ItemNotInListError:
+        if route.owner_id != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+    for waypoint in waypoint_request:
+        waypoint_model = Waypoint(
+            name=waypoint.name,
+            latitude=waypoint.latitude,
+            longitude=waypoint.longitude,
+            order=len(route.waypoints),
+            route=route
+        )
+        waypoint_repository.create(waypoint_model)
+    return waypoint_model
+
+
+@router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
+def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint: WayPointEditRequest):
+    """Permet d'éditer un point de trajet. Cela inclut l'echanger de l'ordre avec un autre point de trajet.\n
+    Code 400: "order-out-of-range" : le nouvel ordre ne correspond pas a un autre point de trajet """
+    route_repository = RouteRepository(db)
+    waypoint_repository = WaypointRepository(db)
+    try:
+        route = route_repository.get_route_by_id(route_id)
+    except SelectNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+
+    try:
+        RouteRepository.get_member(route, user.id)
+    except ItemNotInListError:
+        if route.owner_id != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+    try:
+        original_waypoint = waypoint_repository.get_waypoint_by_id(waypoint.id)
+
+        if original_waypoint.route.id != route_id:
+            raise SelectNotFoundError()
+
+    except SelectNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
+
+    # l'ordre a été changé, il faut l'échanger avec un autre Waypoint
+    if original_waypoint.order != waypoint.order:
+        try:
+            other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
+        except ItemNotInListError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
+        original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
+
+    original_waypoint.name = waypoint.name
+    original_waypoint.latitude = waypoint.latitude
+    original_waypoint.longitude = waypoint.longitude
+    db.commit()
+
