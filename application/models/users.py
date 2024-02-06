@@ -10,14 +10,15 @@ from models.friend import Friend
 from models.routes import Route, route_member_association_table
 from sqlalchemy_serializer import SerializerMixin
 
+
 class User(Base, SerializerMixin):
     __tablename__ = 'users'
     serialize_rules = (
         '-hashed_password',
-        '-routes_owned.owner', '-routes_owned.members',
-        '-routes_joined.owner', '-routes_joined.members',
-        '-friends_sent.requesting_user', '-friends_sent.target_user',
-        '-friends_received.requesting_user', '-friends_received.target_user',
+        '-routes_owned', '-routes_owned',
+        '-routes_joined', '-routes_joined',
+        '-friends_sent', '-friends_sent',
+        '-friends_received', '-friends_received',
     )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String(30), unique=True)
@@ -55,9 +56,3 @@ class User(Base, SerializerMixin):
         lazy="selectin",
         join_depth=1
     )
-
-
-
-
-
-
