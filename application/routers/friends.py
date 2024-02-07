@@ -8,7 +8,7 @@ from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from exceptions.general import SelectNotFoundError, InvalidJWTError, ItemCreateError, ItemUpdateError
 from models.friend import Friend, FriendsStatus
-from models.users import User
+from models.routes import Route
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
 from services.security import get_current_user
@@ -35,7 +35,7 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
     Code 204: Succès\n
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
-    # TODO : remove routes member of friend is revoked
+
     user_repository = UserRepository(db)
     try:
         target_user = user_repository.get_user_by_id(friend_request.target_user_id)
@@ -74,6 +74,7 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
     """
     Met à jour le status d'une demande d'ami.\n
     Seul la personne qui reçoit la demande à la permission de l'accepter ou la refuser.\n
+    Lorsqu'une amitié est supprimée, les participations aux itineraires sont aussi supprimés
     Les deux personnes ont la permission de supprimer une demande acceptée\n
     Code 404 :\n
     - "friend-request-not-found": Si la demande d'ami n'existe pas
@@ -113,6 +114,18 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
 
     # everything is ok, update allowed
     friend_request.status = friend_update_request.status
+
+    if friend_update_request.status == FriendsStatus.REMOVED:
+        routes_user_1 = db.query(Route).filter(Route.owner_id == friend_request.target_user_id).all()
+        for route in routes_user_1:
+            members_1 = [x for x in route.members if x.id != friend_request.requesting_user_id]
+            route.members = members_1
+            return route.to_dict()
+        routes_user_2 = db.query(Route).filter(Route.owner_id == friend_request.requesting_user_id).all()
+        for route in routes_user_2:
+            members_2 = [x for x in route.members if x.id != friend_request.target_user_id]
+            route.members = members_2
+            return route.to_dict()
     try:
         db.commit()
     except SQLAlchemyError:
