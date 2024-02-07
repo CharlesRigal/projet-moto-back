@@ -35,6 +35,7 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
     Code 204: Succès\n
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
+    # TODO : remove routes member of friend is revoked
     user_repository = UserRepository(db)
     try:
         target_user = user_repository.get_user_by_id(friend_request.target_user_id)
