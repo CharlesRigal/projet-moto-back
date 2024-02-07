@@ -76,6 +76,6 @@ class UserRepository:
     def get_friend(user: User, user2_id: str):
         friends = UserRepository.get_friends(user)
         for friend in friends:
-            if str(friend.requesting_user_id) == str(user2_id) or str(frend.target_user_id) == str(user2_id):
+            if str(friend.requesting_user_id) == str(user2_id) or str(friend.target_user_id) == str(user2_id):
                 return friend
         raise ItemNotInListError()
