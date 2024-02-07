@@ -1,14 +1,13 @@
-import enum
-import json
 import uuid
 
-from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
+from sqlalchemy import Column, String, Boolean, UUID
 from sqlalchemy.orm import relationship
 
 from config.database import Base
 from models.friend import Friend
 from models.routes import Route, route_member_association_table
 from sqlalchemy_serializer import SerializerMixin
+from fastapi import WebSocket
 
 
 class User(Base, SerializerMixin):
@@ -26,6 +25,14 @@ class User(Base, SerializerMixin):
     hashed_password = Column(String(254))
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
+
+    def __init__(self, *args):
+        self._active_connection = None
+        self.super(self, *args)
+
+    async def connect(self, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self._active_connection = websocket
 
     routes_owned = relationship(
         "Route",
