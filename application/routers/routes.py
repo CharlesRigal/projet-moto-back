@@ -157,13 +157,15 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
     return route.members
 
 
-@router.post('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
-def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: list[WayPointCreateRequest]):
+@router.put('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
+def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: list[WayPointCreateRequest]):
     """
-    Ajoute un point a un itinéraire
-    Code 200: point crée
+    Remplace la liste de waypoints de la route par la nouvelle liste.
+    Supprime tous les waypoints et les recrée dans la foulée\n
+    Code 200: points crées\n
     Code 404:
-    "route-not-found": la route n'existe pas ou l'utilisateur n'a pas les droits dessus
+    "route-not-found": la route n'existe pas ou l'utilisateur n'a pas les droits dessus\n
+    Code 500 "update-failure": erreur au niveau de la base de données
     """
     route_repository = RouteRepository(db)
     waypoint_repository = WaypointRepository(db)
@@ -177,16 +179,22 @@ def add_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypo
     except ItemNotInListError:
         if route.owner_id != user.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+    waypoints = []
     for waypoint in waypoint_request:
-        waypoint_model = Waypoint(
+        waypoints.append(Waypoint(
             name=waypoint.name,
             latitude=waypoint.latitude,
             longitude=waypoint.longitude,
-            order=len(route.waypoints),
-            route=route
-        )
-        waypoint_repository.create(waypoint_model)
-    return waypoint_model
+            order=waypoint.order,
+        ))
+    try:
+        db.query(Waypoint).filter(Waypoint.route_id == route.id).delete()
+        route.waypoints = waypoints
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+    return waypoints
 
 
 @router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
