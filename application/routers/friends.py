@@ -14,6 +14,7 @@ from repositories.users import UserRepository
 from services.security import get_current_user
 from services.utils import get_db
 
+
 router = APIRouter(
     prefix='/api/v1/friends',
     tags=['friends']
@@ -22,7 +23,6 @@ router = APIRouter(
 db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[dict, Depends(get_current_user)]
-
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def send_friend_request(requesting_user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
@@ -39,7 +39,7 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
     user_repository = UserRepository(db)
     try:
         target_user = user_repository.get_user_by_id(friend_request.target_user_id)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="target-user-not-found")
 
     # si l'utilisateur essaye de s'ajouter lui-même
@@ -92,7 +92,7 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
     # the friend request doesn't exist
     try:
         friend_request = friend_repository.get_friend_by_id(friend_update_request.id)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found")
 
         # the connected user is not part of this friendship

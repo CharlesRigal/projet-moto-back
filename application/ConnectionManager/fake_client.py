@@ -15,6 +15,8 @@ html = """
         </ul>
         <script>
             var ws = new WebSocket("ws://localhost:8888/ws");
+            ws.onopen = function(event) {
+                var token = ""
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')
                 var message = document.createElement('li')

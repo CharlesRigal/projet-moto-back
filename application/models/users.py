@@ -34,6 +34,9 @@ class User(Base, SerializerMixin):
         await websocket.accept()
         self._active_connection = websocket
 
+    async def get_websocket(self) -> WebSocket:
+        return self._active_connection
+
     routes_owned = relationship(
         "Route",
         back_populates="owner",

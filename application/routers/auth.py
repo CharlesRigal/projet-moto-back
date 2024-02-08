@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.auth import CreateUserRequest, Token, PasswordResetRequest
+from dto.auth import CreateUserRequest, Token
 from exceptions.general import ItemCreateError, SelectNotFoundError
 from models.users import User
 from repositories.users import UserRepository
@@ -38,9 +38,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
     user_repository = UserRepository(db)
-    user = None
     try:
-        user = user_repository.get_user_by_email(create_user_request.email)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
             "loc": [
@@ -56,7 +54,6 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
         raise e
 
     try:
-        user = user_repository.get_user_by_username(create_user_request.username)
         # if the username already exists it will raise an exception
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={'details': [{
             "type": 'already_used',
@@ -99,7 +96,7 @@ def login_for_jwt(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     user_repository = UserRepository(db)
     try:
         user = user_repository.get_user_by_email(form_data.username)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id")
     token = create_jwt(user, timedelta(hours=DELTA_HOURS))
     return {'access_token': token, 'token_type': 'bearer'}
@@ -124,14 +121,5 @@ def username_exists(db: db_dependency, username: str):
     user_repository = UserRepository(db)
     try:
         user_repository.get_user_by_username(username)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
-# @router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
-# async def change_password(user: user_dependency, db: db_dependency, password_request: PasswordResetRequest):
-#     user_repository = UserRepository(db)
-#     user_model = user_repository.get_by_id(user.get('id'))
-#     if not bcrypt_context.verify(password_request.old_password, user_model.hashed_password):
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid password")
-#     user_model.hashed_password = bcrypt_context.hash(password_request.new_password)

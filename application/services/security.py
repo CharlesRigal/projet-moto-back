@@ -25,20 +25,17 @@ db_dependency = Annotated[Session, Depends(get_db)]
 def get_current_user(
         token: Annotated[str, Depends(oauth2_bearer)],
         db: db_dependency
-):
+) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get('sub')
         user_id: str = payload.get('id')
-        user_role: str = payload.get('role')
         if email is None or user_id is None:
-            # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
             raise InvalidJWTError()
         user_repository = UserRepository(db)
         user = user_repository.get_user_by_id(user_id)
         return user
     except JWTError:
-        # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         raise InvalidJWTError()
 
 user_dependency = Annotated[dict, Depends(get_current_user)]
