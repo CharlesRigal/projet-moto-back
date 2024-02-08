@@ -73,9 +73,11 @@ class UserRepository:
         return friends
 
     @staticmethod
-    def get_friend(user: User, user2_id: str):
+    def get_friend_user(user: User, user2_id: str):
         friends = UserRepository.get_friends(user)
         for friend in friends:
-            if str(friend.requesting_user_id) == str(user2_id) or str(friend.target_user_id) == str(user2_id):
-                return friend
+            if str(friend.requesting_user_id) == str(user2_id):
+                return friend.requesting_user
+            if str(friend.target_user_id) == str(user2_id):
+                return friend.target_user
         raise ItemNotInListError()

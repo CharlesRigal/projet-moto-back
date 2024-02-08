@@ -95,7 +95,8 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     Ajoute un ami au trajet\n
     Code 404:\n
     - "route-not-found": le trajet n'existe pas ou l'utilisateur n'en est pas le propriétaire\n
-    - "friend-not-found": l'utilisateur n'a pas d'ami ayant cet id
+    - "friend-user-id-not-found": l'utilisateur n'a pas d'ami ayant cet id
+    Code 409 "friend-already-member": l'utilisateur fait deja partie de la route
     """
     route_repository = RouteRepository(db)
     user_repository = UserRepository(db)
@@ -107,9 +108,14 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     if str(route.owner_id) != str(user.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
 
-    friend_user = UserRepository.get_friend(user, member.id)
-    if not friend_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-route")
+    for route_member in route.members:
+        if str(route_member.id) == str(member.id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="friend-already-member")
+
+    try:
+        friend_user = UserRepository.get_friend_user(user, member.id)
+    except ItemNotInListError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-user-id-not-found")
     route.members.append(friend_user)
     try:
         db.commit()
