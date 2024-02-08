@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = os.getenv('JWT_SECRET_KEY')
     jwt_algorithm: str = os.getenv('JWT_ALGORITHM')
     jwt_expire_hours: int = os.getenv('JWT_EXPIRE_HOURS')
+    env: str = os.getenv('ENV')
     class Config:
         env_file = ".env"
 

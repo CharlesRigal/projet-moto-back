@@ -35,3 +35,5 @@ if __name__ == "__main__":
             'workers': number_of_workers(),
         }
         StandaloneApplication(handler_app, options).run()
+    else:
+        raise EnvironmentError("missing ENV variable")
