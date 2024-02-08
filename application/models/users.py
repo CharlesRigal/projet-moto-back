@@ -12,6 +12,8 @@ from sqlalchemy_serializer import SerializerMixin
 
 
 class User(Base, SerializerMixin):
+    def __eq__(self, other):
+        return self.id == other.id
     __tablename__ = 'users'
     serialize_rules = (
         '-hashed_password',
