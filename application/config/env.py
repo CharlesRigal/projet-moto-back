@@ -1,6 +1,7 @@
 import os
 from functools import lru_cache
 
+from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
 from dotenv import load_dotenv
@@ -20,4 +21,7 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings():
-    return Settings()
+    try:
+        return Settings()
+    except ValidationError:
+        raise EnvironmentError("Missig environement variables or malformed")
