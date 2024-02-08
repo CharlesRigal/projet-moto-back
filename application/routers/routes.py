@@ -95,10 +95,10 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     Ajoute un ami au trajet\n
     Code 404:\n
     - "route-not-found": le trajet n'existe pas ou l'utilisateur n'en est pas le propriétaire\n
-    - "friend-not-found": l'utilisateur n'a pas d'ami ayant cet id
+    - "friend-user-id-not-found": l'utilisateur n'a pas d'ami ayant cet id
+    Code 409 "friend-already-member": l'utilisateur fait deja partie de la route
     """
     route_repository = RouteRepository(db)
-    user_repository = UserRepository(db)
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError as e:
@@ -107,9 +107,14 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     if str(route.owner_id) != str(user.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
 
-    friend_user = UserRepository.get_friend(user, member.id)
-    if not friend_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-route")
+    try:
+        friend_user = UserRepository.get_friend_user(user, member.id)
+    except ItemNotInListError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-user-id-not-found")
+
+    if friend_user in route.members:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="friend-already-member")
+
     route.members.append(friend_user)
     try:
         db.commit()
@@ -158,7 +163,8 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
 
 
 @router.put('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
-def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID, waypoint_request: list[WayPointCreateRequest]):
+def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID,
+                     waypoint_request: list[WayPointCreateRequest]):
     """
     Remplace la liste de waypoints de la route par la nouvelle liste.
     Supprime tous les waypoints et les recrée dans la foulée\n
@@ -234,4 +240,3 @@ def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, wayp
     original_waypoint.latitude = waypoint.latitude
     original_waypoint.longitude = waypoint.longitude
     db.commit()
-
