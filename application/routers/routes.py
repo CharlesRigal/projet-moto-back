@@ -124,7 +124,7 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     return route
 
 
-@router.delete('/{route_id}/members', status_code=status.HTTP_200_OK)
+@router.delete('/{route_id}/members', status_code=status.HTTP_204_NO_CONTENT)
 def remove_member(db: db_dependency, user: user_dependency, route_id: str, member_to_delete_request: MemberAddRequest):
     """Si utilisateur propriétaire du voyage: supprime un des membres\n
     Si utilisateur membre du voyage: Retire ce voyage de ses voyages rejoint\n
@@ -149,17 +149,16 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
     # si l'utilisateur connecté n'est ni propriétaire du trajet ni l'utilisateur à supprimer
     if str(user.id) != str(route.owner.id) and str(user.id) != str(user_to_delete.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='route-not-found')
-
     try:
-        route = route_repository.remove_member(route, user_to_delete)
-    except ItemNotInListError as e:
+        route_repository.remove_member(route, user_to_delete)
+
+    except ItemNotInListError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
     try:
         db.commit()
     except SQLAlchemyError:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
 
-    return route.members
 
 
 @router.put('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
@@ -179,7 +178,6 @@ def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID,
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-
     try:
         RouteRepository.get_member(route, user.id)
     except ItemNotInListError:
