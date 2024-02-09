@@ -40,7 +40,6 @@ def get_current_user(
 
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
-
 def get_current_user_admin(user: user_dependency):
     if user.role == 'admin':
         return user

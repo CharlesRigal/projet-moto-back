@@ -19,6 +19,7 @@ class User(Base, SerializerMixin):
         '-friends_sent', '-friends_sent',
         '-friends_received', '-friends_received',
     )
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String(30), unique=True)
     email = Column(String(100), unique=True)
@@ -44,6 +45,7 @@ class User(Base, SerializerMixin):
         lazy="selectin",
         join_depth=1
     )
+
     routes_joined = relationship(
         "Route",
         secondary=route_member_association_table,
@@ -59,6 +61,7 @@ class User(Base, SerializerMixin):
         lazy="selectin",
         join_depth=1
     )
+
     friends_received = relationship(
         "Friend",
         back_populates="target_user",
