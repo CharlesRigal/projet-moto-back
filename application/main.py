@@ -1,7 +1,7 @@
 import os
 import platform
 
-from routers import auth, friends, users, admin, routes
+from routers import auth, friends, users, admin, routes, websocket
 from fastapi import FastAPI
 import uvicorn
 from config.database import engine
@@ -24,6 +24,7 @@ app.include_router(users.router)
 app.include_router(admin.router)
 app.include_router(friends.router)
 app.include_router(routes.router)
+app.include_router(websocket.router)
 
 if __name__ == "__main__":
     if os.environ.get("ENV") == "development":

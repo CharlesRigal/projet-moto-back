@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, WebSocket
 from sqlalchemy.orm import Session
 
-from models.users import User
 from services.security import get_current_user
 from services.utils import get_db
 
@@ -13,20 +12,24 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[User, Depends(get_current_user)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
-@router.websocket("/")
-async def connect_websocket(websocket: WebSocket) -> None:
-    await websocket.accept(websocket)
+@router.websocket("")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    user = get_current_user(websocket.headers["Authorization"], db_dependency)
+    print(user)
+    await websocket.send_text(f"Loged as {user}")
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_text("you wrote")
+            await websocket.send_text(f"Message text was: {data}")
+    except Exception as e:
+        await websocket.send_text(str(e))
 
-
-@router.websocket("/say_hello")
-async def send_message(user: user_dependency):
-    (await user.get_websocket()).send_text("hello !")
+# @router.websocket("/say_hello")
+# async def send_message(user: user_dependency):
+#     (await user.get_websocket()).send_text("hello !")
 
 
 
