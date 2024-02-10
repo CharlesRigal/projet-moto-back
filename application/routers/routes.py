@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
-from dto.waypoints import WayPointCreateRequest, WayPointEditRequest
+from dto.waypoints import WayPointCreateRequest
 from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError, \
     InvalidJWTError
 from models.friend import Friend, FriendsStatus
@@ -22,7 +22,7 @@ from services.security import get_current_user
 from services.utils import get_db
 
 router = APIRouter(
-    prefix='/api/v1/routes',
+    prefix='/api/v0.1/routes',
     tags=['routes']
 )
 
@@ -38,17 +38,29 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
     Code 201: succès\n
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
+    waypoints = []
+    for waypoint in route.waypoints:
+        waypoints.append(
+            Waypoint(
+                name=waypoint.name,
+                latitude=waypoint.latitude,
+                longitude=waypoint.longitude,
+                order=waypoint.order
+            )
+        )
     route_model = Route(
         name=route.name,
         description=route.description,
         owner=user,
-        is_public=False
+        is_public=False,
+        waypoints=waypoints
     )
     route_repository = RouteRepository(db)
     try:
         route_repository.create(route_model)
     except ItemCreateError:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
+    return route_model.to_dict()
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
@@ -200,41 +212,41 @@ def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
     return waypoints
 
-
-@router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
-def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint: WayPointEditRequest):
-    """Permet d'éditer un point de trajet. Cela inclut l'echanger de l'ordre avec un autre point de trajet.\n
-    Code 400: "order-out-of-range" : le nouvel ordre ne correspond pas a un autre point de trajet """
-    route_repository = RouteRepository(db)
-    waypoint_repository = WaypointRepository(db)
-    try:
-        route = route_repository.get_route_by_id(route_id)
-    except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-
-    try:
-        RouteRepository.get_member(route, user.id)
-    except ItemNotInListError:
-        if route.owner_id != user.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-    try:
-        original_waypoint = waypoint_repository.get_waypoint_by_id(waypoint.id)
-
-        if original_waypoint.route.id != route_id:
-            raise SelectNotFoundError()
-
-    except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
-
-    # l'ordre a été changé, il faut l'échanger avec un autre Waypoint
-    if original_waypoint.order != waypoint.order:
-        try:
-            other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
-        except ItemNotInListError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
-        original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
-
-    original_waypoint.name = waypoint.name
-    original_waypoint.latitude = waypoint.latitude
-    original_waypoint.longitude = waypoint.longitude
-    db.commit()
+#
+# @router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
+# def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint: WayPointEditRequest):
+#     """Permet d'éditer un point de trajet. Cela inclut l'echanger de l'ordre avec un autre point de trajet.\n
+#     Code 400: "order-out-of-range" : le nouvel ordre ne correspond pas a un autre point de trajet """
+#     route_repository = RouteRepository(db)
+#     waypoint_repository = WaypointRepository(db)
+#     try:
+#         route = route_repository.get_route_by_id(route_id)
+#     except SelectNotFoundError:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+#
+#     try:
+#         RouteRepository.get_member(route, user.id)
+#     except ItemNotInListError:
+#         if route.owner_id != user.id:
+#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+#     try:
+#         original_waypoint = waypoint_repository.get_waypoint_by_id(waypoint.id)
+#
+#         if original_waypoint.route.id != route_id:
+#             raise SelectNotFoundError()
+#
+#     except SelectNotFoundError:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
+#
+#     # l'ordre a été changé, il faut l'échanger avec un autre Waypoint
+#     if original_waypoint.order != waypoint.order:
+#         try:
+#             other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
+#         except ItemNotInListError:
+#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
+#         original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
+#
+#     original_waypoint.name = waypoint.name
+#     original_waypoint.latitude = waypoint.latitude
+#     original_waypoint.longitude = waypoint.longitude
+#     db.commit()
