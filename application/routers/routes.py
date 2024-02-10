@@ -22,7 +22,7 @@ from services.security import get_current_user
 from services.utils import get_db
 
 router = APIRouter(
-    prefix='/api/v1/routes',
+    prefix='/api/v0.1/routes',
     tags=['routes']
 )
 
