@@ -13,7 +13,7 @@ from services.utils import get_db
 from repositories.users import UserRepository
 
 router = APIRouter(
-    prefix='/api/v1/admin',
+    prefix='/api/v0.1/admin',
     tags=['admin']
 )
 db_dependency = Annotated[Session, Depends(get_db)]
