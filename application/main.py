@@ -27,7 +27,7 @@ app.include_router(routes.router)
 
 if __name__ == "__main__":
     if os.environ.get("ENV") == "development":
-        uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=8888, reload=True)
     elif os.environ.get("ENV") == "production":
         from starter.StandaloneApplication import number_of_workers, StandaloneApplication
         options = {
