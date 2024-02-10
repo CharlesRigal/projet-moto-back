@@ -33,5 +33,6 @@ if __name__ == "__main__":
         options = {
             'bind': '%s:%s' % ('0.0.0.0', '8888'),
             'workers': number_of_workers(),
+            'worker_class': 'uvicorn.workers.UvicornWorker',
         }
         StandaloneApplication(app, options).run()
