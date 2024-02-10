@@ -11,11 +11,9 @@ from models.users import User
 from services.security import get_current_user_admin
 from services.utils import get_db
 from repositories.users import UserRepository
+import os
 
-router = APIRouter(
-    prefix='/api/v1/admin',
-    tags=['admin']
-)
+router = APIRouter(prefix='/api/v1/admin', tags=['admin']) if os.environ.get("ENV") == "development" else APIRouter()
 db_dependency = Annotated[Session, Depends(get_db)]
 admin_dependency = Annotated[dict, Depends(get_current_user_admin)]
 
