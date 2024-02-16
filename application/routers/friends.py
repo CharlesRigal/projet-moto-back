@@ -154,5 +154,7 @@ def get_friends(db: db_dependency, user: user_dependency,pending_sent: bool = No
         friends = friends + UserRepository.get_pendings_received(user)
     to_return_friends = []
     for friend in friends:
-        to_return_friends.append(friend.to_dict())
+        to_return_friend = friend.to_dict()
+        to_return_friend["current_user"] = "target" if str(friend.target_user_id) == str(user.id) else "requesting"
+        to_return_friends.append(to_return_friend)
     return to_return_friends
