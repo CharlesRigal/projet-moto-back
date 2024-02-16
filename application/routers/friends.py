@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
-from exceptions.general import SelectNotFoundError, InvalidJWTError, ItemCreateError, ItemUpdateError
+from exceptions.general import SelectNotFoundError, ItemCreateError
 from models.friend import Friend, FriendsStatus
 from models.routes import Route
 from repositories.friends import FriendRepository

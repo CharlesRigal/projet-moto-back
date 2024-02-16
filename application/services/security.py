@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, WebSocketException, WebSocket
+from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -24,10 +24,16 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v0.1/auth/signin')
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-def web_socket_token_interceptor(websocket: WebSocket, token: str) -> User:
-    if token != Depends(get_settings()):
-        raise WebSocketException(212, "Invalid token")
-    print(websocket)
+def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid authentication scheme")
+        user_id = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("id")
+        return UserRepository(db).get_user_by_id(user_id=user_id)
+
+    except (ValueError, IndexError, JWTError):
+        raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid token")
 
 
 def get_current_user(
