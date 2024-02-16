@@ -11,6 +11,7 @@ from fastapi import WebSocket
 
 
 class User(Base, SerializerMixin):
+
     __tablename__ = 'users'
     serialize_rules = (
         '-hashed_password',

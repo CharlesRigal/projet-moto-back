@@ -16,7 +16,7 @@ from config.env import get_settings
 from services.security import get_current_user
 
 router = APIRouter(
-    prefix='/api/v1/auth',
+    prefix='/api/v0.1/auth',
     tags=['auth']
 )
 db_dependency = Annotated[Session, Depends(get_db)]
