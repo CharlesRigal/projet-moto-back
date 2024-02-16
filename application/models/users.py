@@ -1,5 +1,4 @@
-import enum
-import json
+from fastapi import WebSocket
 import uuid
 
 from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
@@ -27,6 +26,16 @@ class User(Base, SerializerMixin):
     hashed_password = Column(String(254))
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
+
+    def __init__(self,*args, **kwargs):
+        self._websocket = None
+        super().__init__(*args, **kwargs)
+    def get_connection(self) -> WebSocket:
+        return self._websocket
+
+    async def set_connection(self, websocket: WebSocket):
+        await websocket.accept()
+        self._websocket = websocket
 
     routes_owned = relationship(
         "Route",

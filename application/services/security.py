@@ -24,7 +24,7 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v0.1/auth/signin')
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
+def web_socket_token_interceptor(db: db_dependency, authorization: str = Header(...)) -> User:
     try:
         scheme, token = authorization.split()
         if scheme.lower() != "bearer":
