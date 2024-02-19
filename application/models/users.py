@@ -1,7 +1,7 @@
 from fastapi import WebSocket
 import uuid
 
-from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
+from sqlalchemy import Column, String, Boolean, UUID
 from sqlalchemy.orm import relationship
 
 from config.database import Base
@@ -9,9 +9,10 @@ from models.friend import Friend
 from models.routes import Route, route_member_association_table
 from sqlalchemy_serializer import SerializerMixin
 
+from services.WebsocketRegistry import WebSocketRegistry
 
+websocket_registry = WebSocketRegistry()
 class User(Base, SerializerMixin):
-
     __tablename__ = 'users'
     serialize_rules = (
         '-hashed_password',
@@ -27,15 +28,11 @@ class User(Base, SerializerMixin):
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
 
-    def __init__(self,*args, **kwargs):
-        self._websocket = None
-        super().__init__(*args, **kwargs)
     def get_connection(self) -> WebSocket:
-        return self._websocket
+        return websocket_registry.user_websocket(self.id)
 
-    async def set_connection(self, websocket: WebSocket):
-        await websocket.accept()
-        self._websocket = websocket
+    def set_connection(self, websocket: WebSocket):
+        websocket_registry.add_websocket(self.id, websocket)
 
     routes_owned = relationship(
         "Route",
@@ -44,6 +41,7 @@ class User(Base, SerializerMixin):
         lazy="selectin",
         join_depth=1
     )
+
     routes_joined = relationship(
         "Route",
         secondary=route_member_association_table,
@@ -59,6 +57,7 @@ class User(Base, SerializerMixin):
         lazy="selectin",
         join_depth=1
     )
+
     friends_received = relationship(
         "Friend",
         back_populates="target_user",

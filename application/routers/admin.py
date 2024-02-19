@@ -22,7 +22,7 @@ admin_dependency = Annotated[dict, Depends(get_current_user_admin)]
 @router.get('/generate-data')
 def generate_data(db: db_dependency):
     user = User(username="user1", email="email@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="admin")
-    db.add(user);
+    db.add(user)
     user2 = User(username="user2", email="email2@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="user")
     db.add(user2)
     user3 = User(username="user3", email="email3@example.com", hashed_password="$2y$10$bCMUnOxezDkqPa1V3WGYu./S1u2.bxKS6t1WF6Y6DYjbt/9aiFrRm", is_active=True, role="user")

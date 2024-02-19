@@ -1,12 +1,25 @@
+from uuid import UUID
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemCreateError, ItemUpdateError, ItemNotInListError, SelectNotFoundError
+from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
 from models.friend import FriendsStatus
 from models.users import User
+from services.WebsocketRegistry import WebSocketRegistry
 
+websocket_dic = WebSocketRegistry()
 
 class UserRepository:
+
+    async def send_friend_status(self, user: User):
+        friends = self.get_friends(user)
+        for friend in friends:
+            friend_user = self.get_friend_user(user, friend.id)
+            friend_ws = friend_user.get_connection()
+            if friend_ws:
+                status = "connecté" if friend_ws.open else "disconnected"
+                await friend_ws.send_text(f"{user.username} was {status}")
     def __init__(self, db: Session):
         self.db = db
 
@@ -19,10 +32,11 @@ class UserRepository:
             raise ItemCreateError()
 
 
-    def get_user_by_id(self, user_id: str):
+    def get_user_by_id(self, user_id: UUID):
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             raise SelectNotFoundError()
+        user.set_connection(websocket_dic.user_websocket(user.id))
         return user
 
     def get_user_by_username(self, username: str):

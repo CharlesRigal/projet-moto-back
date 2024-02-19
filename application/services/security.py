@@ -12,6 +12,7 @@ from config.env import get_settings
 from exceptions.general import InvalidJWTError
 from models.users import User
 from repositories.users import UserRepository
+from services.WebsocketRegistry import WebSocketRegistry
 from services.utils import get_db
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,9 +23,9 @@ DELTA_HOURS = get_settings().jwt_expire_hours
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v0.1/auth/signin')
 
 db_dependency = Annotated[Session, Depends(get_db)]
+websocket_registry = WebSocketRegistry()
 
-
-def web_socket_token_interceptor(db: db_dependency, authorization: str = Header(...)) -> User:
+def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
     try:
         scheme, token = authorization.split()
         if scheme.lower() != "bearer":

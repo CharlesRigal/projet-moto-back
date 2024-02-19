@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, WebSocket
 from sqlalchemy.orm import Session
 
 from models.users import User
+from repositories.users import UserRepository
 from services.security import web_socket_token_interceptor
 from services.utils import get_db
 
@@ -16,14 +17,16 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[User, Depends(web_socket_token_interceptor)]
 
 @router.websocket("")
-async def websocket_endpoint(websocket: WebSocket, user: user_dependency):
-    await user.set_connection(websocket)
-    try:
-        while True:
-            data = await user.get_connection().receive_text()
-            await user.get_connection().send_text(f"Message text was: {data} as : {user}")
-    except Exception as e:
-        await websocket.send_text(str(e))
+async def websocket_endpoint(websocket: WebSocket, user: user_dependency, db: db_dependency):
+    user.set_connection(websocket)
+    await user.get_connection().accept()
+    user_repository = UserRepository(db)
+    await user_repository.send_friend_status(user)
+
+@router.websocket("/me_coucou")
+async def get_user_and_send_message(websocket: WebSocket, user: user_dependency):
+    print(user)
+    await user.get_connection().send_text("coucou {{user.username}}")
 
 # @router.websocket("/say_hello")
 # async def send_message(user: user_dependency):

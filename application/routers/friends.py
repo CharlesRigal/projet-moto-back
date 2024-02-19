@@ -133,7 +133,7 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
 
 @router.get('/', status_code=status.HTTP_200_OK)
-def get_friends(db: db_dependency, user: user_dependency,pending_sent: bool = None,
+def get_friends(db: db_dependency, user: user_dependency, pending_sent: bool = None,
                 pending_received: bool = None):
     """
     Récupère la liste d'ami de l'utilisateur.\n
