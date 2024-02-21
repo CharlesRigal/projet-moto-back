@@ -81,7 +81,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
         user_repository.create(create_user_model)
     except ItemCreateError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
-    return {'success': True}
+    return create_user_model.to_dict()
 
 
 @router.post("/signin", status_code=status.HTTP_200_OK, response_model=Token)
