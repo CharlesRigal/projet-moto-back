@@ -29,10 +29,10 @@ class User(Base, SerializerMixin):
     role = Column(String(30), default="user")
 
     def get_connection(self) -> WebSocket:
-        return websocket_registry.user_websocket(self.id)
+        return websocket_registry.get_websocket_by_user_uuid(self.id)
 
-    def set_connection(self, websocket: WebSocket):
-        websocket_registry.add_websocket(self.id, websocket)
+    async def set_connection(self, websocket: WebSocket):
+        await websocket_registry.add_websocket(self.id, websocket)
 
     routes_owned = relationship(
         "Route",

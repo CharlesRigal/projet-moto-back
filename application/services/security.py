@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
-from typing import Annotated
+from typing import Annotated, Any
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header, status
 from fastapi.security import OAuth2PasswordBearer
@@ -25,12 +26,14 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v0.1/auth/signin')
 db_dependency = Annotated[Session, Depends(get_db)]
 websocket_registry = WebSocketRegistry()
 
-def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
+async def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
     try:
         scheme, token = authorization.split()
+        websocketsRegistry = WebSocketRegistry()
         if scheme.lower() != "bearer":
             raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid authentication scheme")
         user_id = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("id")
+        await websocketsRegistry.add_websocket(UUID(user_id), websocket)
         return UserRepository(db).get_user_by_id(user_id=user_id)
 
     except (ValueError, IndexError, JWTError):
