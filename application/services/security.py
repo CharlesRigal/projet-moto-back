@@ -29,12 +29,13 @@ websocket_registry = WebSocketRegistry()
 async def web_socket_token_interceptor(websocket: WebSocket, db: db_dependency, authorization: str = Header(...)) -> User:
     try:
         scheme, token = authorization.split()
-        websocketsRegistry = WebSocketRegistry()
         if scheme.lower() != "bearer":
             raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid authentication scheme")
         user_id = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("id")
-        await websocketsRegistry.add_websocket(UUID(user_id), websocket)
-        return UserRepository(db).get_user_by_id(user_id=user_id)
+        user = UserRepository(db).get_user_by_id(user_id=user_id)
+        user.websocket = websocket
+        await user.websocket.accept()
+        return user
 
     except (ValueError, IndexError, JWTError):
         raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid token")

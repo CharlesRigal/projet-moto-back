@@ -1,15 +1,16 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocket
 
 from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
 from models.friend import FriendsStatus
 from models.users import User
 from services.WebsocketRegistry import WebSocketRegistry
 
-websocket_dic = WebSocketRegistry()
+websockets_registry = WebSocketRegistry()
 
 
 class UserRepository:

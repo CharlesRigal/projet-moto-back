@@ -7,7 +7,7 @@ from models.users import User
 from repositories.users import UserRepository
 from services.security import web_socket_token_interceptor
 from services.utils import get_db
-from services.WebsocketRegistry import WebSocketRegistry
+from services.WebsocketRegistry import WebSocketRegistry, ConnectionManager
 
 router = APIRouter(
     prefix='/ws',
@@ -19,23 +19,21 @@ user_dependency = Annotated[User, Depends(web_socket_token_interceptor)]
 websocket_registry = WebSocketRegistry()
 
 @router.websocket("")
-async def websocket_connect(user: user_dependency, db: db_dependency):
+async def websocket_connect(websocket: WebSocket, user: user_dependency, db: db_dependency):
     user_repository = UserRepository(db)
-    for friend in user_repository.get_friends_as_user(user):
-        try:
-            friend_websocket = websocket_registry.get_websocket_by_user_uuid(friend.id)
-            if friend_websocket is not None:
-                #await friend_websocket.send_text("Hello")
-                friend_websocket = websocket_registry.get_websocket_by_user_uuid(friend.id)
-                user_websocket = user.get_connection()
-                user_websocket.send_text()
-                await friend_websocket.send_text("Hello")
+    try:
+        for friend in user_repository.get_friends_as_user(user):
+            if websocket_registry.connection_is_active(friend.id):
+                await (websocket_registry
+                       .get_websocket_by_user_uuid(friend.id)
+                       .send_text(f"user {user.username} connected !"))
+                await (user.websocket.send_text(f"friend {friend.username} is connected"))
             else:
-                await user.get_connection().send_text(f"{friend.username} is not connected")
-        except WebSocketDisconnect:
-            print("WebSocket disconnected for friend:", friend)
-        except Exception as e:
-            print(f"friend connection {friend.get_connection()}")
+                await (user.websocket.send_text(f"friend {friend.username} not connected"))
+        while True:
+            await user.websocket.receive_text()
+    except WebSocketDisconnect:
+        del user.websocket
 
 @router.websocket("/me_coucou")
 async def get_user_and_send_message(websocket: WebSocket, user: user_dependency):

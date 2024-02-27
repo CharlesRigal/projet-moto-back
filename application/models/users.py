@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import WebSocket
 import uuid
 
@@ -11,7 +13,7 @@ from sqlalchemy_serializer import SerializerMixin
 
 from services.WebsocketRegistry import WebSocketRegistry
 
-websocket_registry = WebSocketRegistry()
+websockets_registry = WebSocketRegistry()
 class User(Base, SerializerMixin):
     __tablename__ = 'users'
     serialize_rules = (
@@ -28,11 +30,17 @@ class User(Base, SerializerMixin):
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default="user")
 
-    def get_connection(self) -> WebSocket:
-        return websocket_registry.get_websocket_by_user_uuid(self.id)
+    @property
+    def websocket(self) -> Optional[WebSocket]:
+        return websockets_registry.get_websocket_by_user_uuid(self.id)
 
-    async def set_connection(self, websocket: WebSocket):
-        await websocket_registry.add_websocket(self.id, websocket)
+    @websocket.setter
+    def websocket(self, websocket: WebSocket):
+        websockets_registry.add_websocket(self.id, websocket)
+
+    @websocket.deleter
+    def websocket(self):
+        websockets_registry.remove_websocket(self.id)
 
     routes_owned = relationship(
         "Route",
