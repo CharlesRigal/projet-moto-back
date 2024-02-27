@@ -21,4 +21,6 @@ class SelectNotFoundError(Exception):
 class InvalidJWTError(Exception):
     def __init__(self, detail=None):
         super().__init__(detail)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )

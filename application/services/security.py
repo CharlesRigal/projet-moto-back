@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -12,6 +12,7 @@ from config.env import get_settings
 from exceptions.general import InvalidJWTError
 from models.users import User
 from repositories.users import UserRepository
+from services.WebsocketRegistry import WebSocketRegistry
 from services.utils import get_db
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -19,18 +20,37 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = get_settings().jwt_secret_key
 ALGORITHM = get_settings().jwt_algorithm
 DELTA_HOURS = get_settings().jwt_expire_hours
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v0.1/auth/signin')
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/api/v0.1/auth/signin")
 
 db_dependency = Annotated[Session, Depends(get_db)]
-def get_current_user(
-        token: Annotated[str, Depends(oauth2_bearer)],
-        db: db_dependency
-):
+websocket_registry = WebSocketRegistry()
+
+
+async def web_socket_token_interceptor(
+    websocket: WebSocket, db: db_dependency, authorization: str = Header(...)
+) -> User:
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise WebSocketException(
+                status.WS_1008_POLICY_VIOLATION, "Invalid authentication scheme"
+            )
+        user_id = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("id")
+        user = UserRepository(db).get_user_by_id(user_id=user_id)
+        user.websocket = websocket
+        await user.websocket.accept()
+        return user
+
+    except (ValueError, IndexError, JWTError):
+        raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid token")
+
+
+def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: db_dependency):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get('sub')
-        user_id: str = payload.get('id')
-        user_role: str = payload.get('role')
+        email: str = payload.get("sub")
+        user_id: str = payload.get("id")
+        user_role: str = payload.get("role")
         if email is None or user_id is None:
             # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
             raise InvalidJWTError()
@@ -41,13 +61,16 @@ def get_current_user(
         # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         raise InvalidJWTError()
 
+
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 def get_current_user_admin(user: user_dependency):
-    if user.role == 'admin':
+    if user.role == "admin":
         return user
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+    )
 
 
 def authenticate_user(db: Session, email: str, password: str):
@@ -60,7 +83,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_jwt(user: User, expires_delta: timedelta):
-    encode = {'sub': user.email, 'id': str(user.id), 'role': user.role}
+    encode = {"sub": user.email, "id": str(user.id), "role": user.role}
     expires = datetime.now() + expires_delta
-    encode.update({'exp': expires})
+    encode.update({"exp": expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)

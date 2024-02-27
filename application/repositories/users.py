@@ -1,12 +1,19 @@
+from typing import List
+from uuid import UUID
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemCreateError, ItemUpdateError, ItemNotInListError, SelectNotFoundError
+from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
 from models.friend import FriendsStatus
 from models.users import User
+from services.WebsocketRegistry import WebSocketRegistry
+
+websockets_registry = WebSocketRegistry()
 
 
 class UserRepository:
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -18,8 +25,7 @@ class UserRepository:
             self.db.rollback()
             raise ItemCreateError()
 
-
-    def get_user_by_id(self, user_id: str):
+    def get_user_by_id(self, user_id: UUID):
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             raise SelectNotFoundError()
@@ -56,6 +62,17 @@ class UserRepository:
         return friends
 
     @staticmethod
+    def get_friends_as_user(user: User) -> List[User]:
+        users = []
+        for friend in user.friends_received:
+            if friend.status == FriendsStatus.ACCEPTED:
+                users.append(friend.requesting_user)
+        for friend in user.friends_sent:
+            if friend.status == FriendsStatus.ACCEPTED:
+                users.append(friend.target_user)
+        return users
+
+    @staticmethod
     def get_pendings_sent(user):
         friends = []
         for friend in user.friends_sent:
@@ -74,6 +91,9 @@ class UserRepository:
 
     @staticmethod
     def get_friend_user(user: User, user2_id: str):
+        """
+        verifie si l'user possede l'user2 en ami, et retourne l'objet user de user2 si oui
+        """
         friends = UserRepository.get_friends(user)
         for friend in friends:
             if str(friend.requesting_user_id) == str(user2_id):

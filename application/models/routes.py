@@ -10,29 +10,38 @@ route_member_association_table = Table(
     "route_member_association_table",
     Base.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("route_id", ForeignKey("routes.id"), primary_key=True)
+    Column("route_id", ForeignKey("routes.id"), primary_key=True),
 )
 
 
 class Route(Base, SerializerMixin):
-    __tablename__ = 'routes'
+    __tablename__ = "routes"
     serialize_rules = [
-        '-owner.routes_joined', '-owner.routes_owned', '-owner.friends_sent', '-owner.friends_received',  '-owner.role',  '-owner.email',
-        '-members.routes_joined', '-members.routes_owned', '-members.friends_sent', '-members.friends_received', '-members.role', '-members.email',
-        '-waypoints.route',
+        "-owner.routes_joined",
+        "-owner.routes_owned",
+        "-owner.friends_sent",
+        "-owner.friends_received",
+        "-owner.role",
+        "-owner.email",
+        "-members.routes_joined",
+        "-members.routes_owned",
+        "-members.friends_sent",
+        "-members.friends_received",
+        "-members.role",
+        "-members.email",
+        "-waypoints.route",
     ]
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))
     description = Column(Text())
     is_public = Column(Boolean())
-    owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     owner = relationship(
         "User",
         foreign_keys=[owner_id],
         back_populates="routes_owned",
         lazy="selectin",
-
     )
 
     members = relationship(
@@ -48,5 +57,3 @@ class Route(Base, SerializerMixin):
         foreign_keys=[Waypoint.route_id],
         lazy="selectin",
     )
-
-
