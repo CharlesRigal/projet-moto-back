@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi import WebSocket
 
 
-
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[UUID, WebSocket] = {}
@@ -25,6 +24,7 @@ class ConnectionManager:
             return True
         else:
             return False
+
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():
             await connection.send_text(message)

@@ -33,10 +33,14 @@ if __name__ == "__main__":
         if platform.system() != "Linux":
             raise OSError("Production setting is only suitable on linux")
         uvicorn.run("main:app", host="0.0.0.0", port=8888, reload=True)
-        from starter.StandaloneApplication import number_of_workers, StandaloneApplication
+        from starter.StandaloneApplication import (
+            number_of_workers,
+            StandaloneApplication,
+        )
+
         options = {
-            'bind': '%s:%s' % ('0.0.0.0', '8888'),
-            'workers': number_of_workers(),
-            'worker_class': 'uvicorn.workers.UvicornWorker',
+            "bind": "%s:%s" % ("0.0.0.0", "8888"),
+            "workers": number_of_workers(),
+            "worker_class": "uvicorn.workers.UvicornWorker",
         }
         StandaloneApplication(app, options).run()

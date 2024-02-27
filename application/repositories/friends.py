@@ -17,7 +17,6 @@ class FriendRepository:
             self.db.rollback()
             raise ItemCreateError()
 
-
     def get_friend_by_id(self, id: str):
         friend = self.db.query(Friend).filter(Friend.id == id).first()
         if not friend:
@@ -26,6 +25,8 @@ class FriendRepository:
 
     @staticmethod
     def is_part_of_friendship(user_id: str, friend: Friend):
-        if str(user_id) == str(friend.target_user_id) or str(user_id) == str(friend.requesting_user_id):
+        if str(user_id) == str(friend.target_user_id) or str(user_id) == str(
+            friend.requesting_user_id
+        ):
             return True
         return False

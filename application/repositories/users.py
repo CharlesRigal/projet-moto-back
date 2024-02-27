@@ -1,9 +1,8 @@
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from starlette.websockets import WebSocket
 
 from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
 from models.friend import FriendsStatus
@@ -14,7 +13,6 @@ websockets_registry = WebSocketRegistry()
 
 
 class UserRepository:
-
 
     def __init__(self, db: Session):
         self.db = db
@@ -91,11 +89,10 @@ class UserRepository:
 
         return friends
 
-
     @staticmethod
     def get_friend_user(user: User, user2_id: str):
         """
-            verifie si l'user possede l'user2 en ami, et retourne l'objet user de user2 si oui
+        verifie si l'user possede l'user2 en ami, et retourne l'objet user de user2 si oui
         """
         friends = UserRepository.get_friends(user)
         for friend in friends:

@@ -8,8 +8,13 @@ from starlette import status
 from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
 from dto.waypoints import WayPointCreateRequest
-from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError, \
-    InvalidJWTError
+from exceptions.general import (
+    ItemNotInListError,
+    ItemUpdateError,
+    ItemCreateError,
+    SelectNotFoundError,
+    InvalidJWTError,
+)
 from models.friend import Friend, FriendsStatus
 from models.routes import Route
 from models.waypoint import Waypoint
@@ -21,10 +26,7 @@ from repositories.waypoints import WaypointRepository
 from services.security import get_current_user
 from services.utils import get_db
 
-router = APIRouter(
-    prefix='/api/v0.1/routes',
-    tags=['routes']
-)
+router = APIRouter(prefix="/api/v0.1/routes", tags=["routes"])
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
@@ -45,7 +47,7 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
                 name=waypoint.name,
                 latitude=waypoint.latitude,
                 longitude=waypoint.longitude,
-                order=waypoint.order
+                order=waypoint.order,
             )
         )
     route_model = Route(
@@ -53,18 +55,22 @@ def create_route(db: db_dependency, user: user_dependency, route: RouteCreateReq
         description=route.description,
         owner=user,
         is_public=False,
-        waypoints=waypoints
+        waypoints=waypoints,
     )
     route_repository = RouteRepository(db)
     try:
         route_repository.create(route_model)
     except ItemCreateError:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure"
+        )
     return route_model.to_dict()
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-def get_all_own_route(db: db_dependency, user: user_dependency, owned: bool = False, joined: bool = False):
+def get_all_own_route(
+    db: db_dependency, user: user_dependency, owned: bool = False, joined: bool = False
+):
     """Récupère tous les voyages en lien à l'utilisateur connecté, en laissant le choix de choisir les
     voyages rejoint, possédés, ou les deux."""
     to_return = []
@@ -89,7 +95,9 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
     try:
         route = route_repository.get_route_by_id(id)
     except SelectNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
     if str(user.id) != str(route.owner_id):
         found = False
         for _user in route.members:
@@ -97,12 +105,16 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
                 found = True
                 break
         if not found:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+            )
     return route.to_dict()
 
 
-@router.post('/{route_id}/members', status_code=status.HTTP_201_CREATED)
-def add_member(db: db_dependency, user: user_dependency, route_id: str, member: MemberAddRequest):
+@router.post("/{route_id}/members", status_code=status.HTTP_201_CREATED)
+def add_member(
+    db: db_dependency, user: user_dependency, route_id: str, member: MemberAddRequest
+):
     """
     Ajoute un ami au trajet\n
     Code 404:\n
@@ -114,30 +126,45 @@ def add_member(db: db_dependency, user: user_dependency, route_id: str, member: 
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
 
     if str(route.owner_id) != str(user.id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
 
     try:
         friend_user = UserRepository.get_friend_user(user, member.id)
     except ItemNotInListError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-user-id-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="friend-user-id-not-found"
+        )
 
     if friend_user in route.members:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="friend-already-member")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="friend-already-member"
+        )
 
     route.members.append(friend_user)
     try:
         db.commit()
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
     return route
 
 
-@router.delete('/{route_id}/members', status_code=status.HTTP_204_NO_CONTENT)
-def remove_member(db: db_dependency, user: user_dependency, route_id: str, member_to_delete_request: MemberAddRequest):
+@router.delete("/{route_id}/members", status_code=status.HTTP_204_NO_CONTENT)
+def remove_member(
+    db: db_dependency,
+    user: user_dependency,
+    route_id: str,
+    member_to_delete_request: MemberAddRequest,
+):
     """Si utilisateur propriétaire du voyage: supprime un des membres\n
     Si utilisateur membre du voyage: Retire ce voyage de ses voyages rejoint\n
     Code 404:\n
@@ -150,32 +177,45 @@ def remove_member(db: db_dependency, user: user_dependency, route_id: str, membe
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
 
     try:
         user_to_delete = user_repository.get_user_by_id(member_to_delete_request.id)
     except SelectNotFoundError:
         # l'utilisateur cible n'existe pas
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route"
+        )
 
     # si l'utilisateur connecté n'est ni propriétaire du trajet ni l'utilisateur à supprimer
     if str(user.id) != str(route.owner.id) and str(user.id) != str(user_to_delete.id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='route-not-found')
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
     try:
         route_repository.remove_member(route, user_to_delete)
 
     except ItemNotInListError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user-not-part-of-the-route"
+        )
     try:
         db.commit()
     except SQLAlchemyError:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
 
 
-
-@router.put('/{route_id}/waypoints', status_code=status.HTTP_200_OK)
-def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID,
-                     waypoint_request: list[WayPointCreateRequest]):
+@router.put("/{route_id}/waypoints", status_code=status.HTTP_200_OK)
+def update_waypoints(
+    db: db_dependency,
+    user: user_dependency,
+    route_id: UUID,
+    waypoint_request: list[WayPointCreateRequest],
+):
     """
     Remplace la liste de waypoints de la route par la nouvelle liste.
     Supprime tous les waypoints et les recrée dans la foulée\n
@@ -189,28 +229,37 @@ def update_waypoints(db: db_dependency, user: user_dependency, route_id: UUID,
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
     try:
         RouteRepository.get_member(route, user.id)
     except ItemNotInListError:
         if route.owner_id != user.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+            )
     waypoints = []
     for waypoint in waypoint_request:
-        waypoints.append(Waypoint(
-            name=waypoint.name,
-            latitude=waypoint.latitude,
-            longitude=waypoint.longitude,
-            order=waypoint.order,
-        ))
+        waypoints.append(
+            Waypoint(
+                name=waypoint.name,
+                latitude=waypoint.latitude,
+                longitude=waypoint.longitude,
+                order=waypoint.order,
+            )
+        )
     try:
         db.query(Waypoint).filter(Waypoint.route_id == route.id).delete()
         route.waypoints = waypoints
         db.commit()
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
     return waypoints
+
 
 #
 # @router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)

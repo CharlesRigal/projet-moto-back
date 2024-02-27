@@ -1,10 +1,16 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemNotInListError, ItemUpdateError, ItemCreateError, SelectNotFoundError
+from exceptions.general import (
+    ItemNotInListError,
+    ItemUpdateError,
+    ItemCreateError,
+    SelectNotFoundError,
+)
 from models.routes import Route
 from models.users import User
 import logging
+
 
 class RouteRepository:
     def __init__(self, db: Session):
@@ -17,8 +23,6 @@ class RouteRepository:
         except SQLAlchemyError:
             self.db.rollback()
             raise ItemCreateError()
-
-
 
     def remove_member(self, route: Route, user_to_delete: User):
         try:

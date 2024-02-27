@@ -24,14 +24,17 @@ class WaypointRepository:
             raise SelectNotFoundError()
         return route
 
-
     @staticmethod
     def swap_waypoints(route: Route, waypoint1: Waypoint, waypoint2: Waypoint):
         waypoint1.order, waypoint2.order = waypoint2.order, waypoint1.order
         return waypoint1, waypoint2
 
     def get_waypoint_by_order(self, route: Route, order: int):
-        waypoint = self.db.query(Waypoint).filter(Waypoint.route_id == route.id and Waypoint.order == order).first()
+        waypoint = (
+            self.db.query(Waypoint)
+            .filter(Waypoint.route_id == route.id and Waypoint.order == order)
+            .first()
+        )
         if not waypoint:
             raise SelectNotFoundError()
         return waypoint

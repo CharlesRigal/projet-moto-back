@@ -15,17 +15,19 @@ from services.security import get_current_user
 from services.utils import get_db
 
 
-router = APIRouter(
-    prefix='/api/v0.1/friends',
-    tags=['friends']
-)
+router = APIRouter(prefix="/api/v0.1/friends", tags=["friends"])
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def send_friend_request(requesting_user: user_dependency, db: db_dependency, friend_request: FriendCreateRequest):
+def send_friend_request(
+    requesting_user: user_dependency,
+    db: db_dependency,
+    friend_request: FriendCreateRequest,
+):
     """
     Envoi une demande d'ami à un utilisateur.\n
     L'id de l'émetteur est l'id de l'utilisateur connecté.\n
@@ -40,21 +42,27 @@ def send_friend_request(requesting_user: user_dependency, db: db_dependency, fri
     try:
         target_user = user_repository.get_user_by_id(friend_request.target_user_id)
     except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="target-user-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="target-user-not-found"
+        )
 
     # si l'utilisateur essaye de s'ajouter lui-même
     if str(requesting_user.id) == str(target_user.id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="cant-request-oneself")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="cant-request-oneself"
+        )
     friend_request_model = Friend(
         status=FriendsStatus.PENDING,
         requesting_user=requesting_user,
-        target_user=target_user
+        target_user=target_user,
     )
     friend_repository = FriendRepository(db)
     try:
         friend_repository.create(friend_request_model)
     except ItemCreateError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure"
+        )
     return "created"
 
 
@@ -65,12 +73,14 @@ friends_status_possibilities = {
     ],
     FriendsStatus.ACCEPTED: [
         FriendsStatus.REMOVED,
-    ]
+    ],
 }
 
 
 @router.patch("/", status_code=status.HTTP_204_NO_CONTENT)
-def update(user: user_dependency, db: db_dependency, friend_update_request: FriendUpdateRequest):
+def update(
+    user: user_dependency, db: db_dependency, friend_update_request: FriendUpdateRequest
+):
     """
     Met à jour le status d'une demande d'ami.\n
     Seul la personne qui reçoit la demande à la permission de l'accepter ou la refuser.\n
@@ -93,48 +103,80 @@ def update(user: user_dependency, db: db_dependency, friend_update_request: Frie
     try:
         friend_request = friend_repository.get_friend_by_id(friend_update_request.id)
     except SelectNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found"
+        )
 
         # the connected user is not part of this friendship
     if not FriendRepository.is_part_of_friendship(user.id, friend_request):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="friend-request-not-found"
+        )
 
     if friend_request.status == FriendsStatus.PENDING:
         # if the user is not the target user
         if str(user.id) != str(friend_request.target_user_id):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="not-allowed")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="not-allowed"
+            )
 
     # the status doesn't change
     if friend_request.status == friend_update_request.status:
-        raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="unchanged")
+        raise HTTPException(
+            status_code=status.HTTP_304_NOT_MODIFIED, detail="unchanged"
+        )
 
     # the status change is not in the array of possibilities
-    if friend_update_request.status not in friends_status_possibilities[friend_request.status]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="status-not-possible")
+    if (
+        friend_update_request.status
+        not in friends_status_possibilities[friend_request.status]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="status-not-possible"
+        )
 
     # everything is ok, update allowed
     friend_request.status = friend_update_request.status
 
     if friend_update_request.status == FriendsStatus.REMOVED:
-        routes_user_1 = db.query(Route).filter(Route.owner_id == friend_request.target_user_id).all()
+        routes_user_1 = (
+            db.query(Route)
+            .filter(Route.owner_id == friend_request.target_user_id)
+            .all()
+        )
         for route in routes_user_1:
-            members_1 = [x for x in route.members if x.id != friend_request.requesting_user_id]
+            members_1 = [
+                x for x in route.members if x.id != friend_request.requesting_user_id
+            ]
             route.members = members_1
             return route.to_dict()
-        routes_user_2 = db.query(Route).filter(Route.owner_id == friend_request.requesting_user_id).all()
+        routes_user_2 = (
+            db.query(Route)
+            .filter(Route.owner_id == friend_request.requesting_user_id)
+            .all()
+        )
         for route in routes_user_2:
-            members_2 = [x for x in route.members if x.id != friend_request.target_user_id]
+            members_2 = [
+                x for x in route.members if x.id != friend_request.target_user_id
+            ]
             route.members = members_2
             return route.to_dict()
     try:
         db.commit()
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
 
-@router.get('/', status_code=status.HTTP_200_OK)
-def get_friends(db: db_dependency, user: user_dependency, pending_sent: bool = None,
-                pending_received: bool = None):
+
+@router.get("/", status_code=status.HTTP_200_OK)
+def get_friends(
+    db: db_dependency,
+    user: user_dependency,
+    pending_sent: bool = None,
+    pending_received: bool = None,
+):
     """
     Récupère la liste d'ami de l'utilisateur.\n
     Il n'est possible d'utiliser cette requête que sur l'utilisateur connecté.\n
@@ -155,6 +197,8 @@ def get_friends(db: db_dependency, user: user_dependency, pending_sent: bool = N
     to_return_friends = []
     for friend in friends:
         to_return_friend = friend.to_dict()
-        to_return_friend["current_user"] = "target" if str(friend.target_user_id) == str(user.id) else "requesting"
+        to_return_friend["current_user"] = (
+            "target" if str(friend.target_user_id) == str(user.id) else "requesting"
+        )
         to_return_friends.append(to_return_friend)
     return to_return_friends
