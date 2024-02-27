@@ -21,14 +21,14 @@ async def websocket_connect(user: user_dependency, db: db_dependency):
     try:
         for friend in user_repository.get_friends_as_user(user):
             if websocket_registry.connection_is_active(friend.id):
-                await friend.websocket.send_json({"user-name": user.username, "user-uuid": str(user.id), "status": 1})
-                await user.websocket.send_json({"user-name": friend.username, "user-uuid": str(friend.id), "status": 1})
+                await friend.websocket.send_json({"user-uuid": str(user.id), "status": 1})
+                await user.websocket.send_json({"user-uuid": str(friend.id), "status": 1})
             else:
-                await user.websocket.send_json({"user-name": friend.username, "user-uuid": str(friend.id), "status": 0})
+                await user.websocket.send_json({"user-uuid": str(friend.id), "status": 0})
         while True:
             await user.websocket.receive_text()
     except WebSocketDisconnect:
         for friend in user_repository.get_friends_as_user(user):
             if websocket_registry.connection_is_active(friend.id):
-                await friend.websocket.send_json({"user-name": user.username, "user-uuid": str(user.id), "status": 0})
+                await friend.websocket.send_json({"user-uuid": str(user.id), "status": 0})
         del user.websocket
