@@ -35,9 +35,8 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     Code 500 "creation-failure": erreur dans la création au niveau de la bdd\n
     """
     user_repository = UserRepository(db)
-    user = None
     try:
-        user = user_repository.get_user_by_email(create_user_request.email)
+        user_repository.get_user_by_email(create_user_request.email)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
