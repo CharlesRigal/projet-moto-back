@@ -252,7 +252,6 @@ async def update_waypoints(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
         )
-    await send_message_to_friends(user, {"route-uuid": str(route.id)}, db)
     await send_message_to_other_user_of_route_exept_sender(user, route, {"route-uuid": str(route.id)})
     return waypoints
 
