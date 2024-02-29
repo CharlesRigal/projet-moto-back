@@ -73,6 +73,15 @@ class UserRepository:
         return users
 
     @staticmethod
+    def get_connected_friends(user: User) -> List[User]:
+        users = []
+        for friend in user.friends_received + user.friends_sent:
+            if friend.status == FriendsStatus.ACCEPTED and websockets_registry.connection_is_active(friend.requesting_user.id):
+                users.append(friend.requesting_user)
+        return users
+
+
+    @staticmethod
     def get_pendings_sent(user):
         friends = []
         for friend in user.friends_sent:

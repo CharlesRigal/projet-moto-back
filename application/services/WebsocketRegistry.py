@@ -1,33 +1,7 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from uuid import UUID
 
 from fastapi import WebSocket
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: Dict[UUID, WebSocket] = {}
-
-    async def connect(self, uuid: UUID, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections[uuid] = websocket
-
-    def disconnect(self, uuid: UUID) -> None:
-        del self.active_connections[uuid]
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def send_message_to_user(self, message: str, uuid: UUID):
-        if uuid in self.active_connections:
-            await self.send_personal_message(message, self.active_connections[uuid])
-            return True
-        else:
-            return False
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections.values():
-            await connection.send_text(message)
 
 
 class WebSocketRegistry:
@@ -51,3 +25,6 @@ class WebSocketRegistry:
     def remove_websocket(self, user_id: UUID) -> None:
         if user_id in self.websocket_dic:
             del self.websocket_dic[user_id]
+
+    def get_websocket_list_from_uuid_list(self, uuid_list: List[UUID]) -> List[WebSocket]:
+        return [self.websocket_dic[uuid] for uuid in uuid_list if uuid in self.websocket_dic]

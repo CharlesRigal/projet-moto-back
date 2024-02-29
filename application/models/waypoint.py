@@ -6,10 +6,7 @@ from sqlalchemy import (
     Column,
     UUID,
     String,
-    Boolean,
-    Table,
     ForeignKey,
-    Text,
     DECIMAL,
     Integer,
 )
