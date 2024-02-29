@@ -26,5 +26,9 @@ class WebSocketRegistry:
         if user_id in self.websocket_dic:
             del self.websocket_dic[user_id]
 
-    def get_websocket_list_from_uuid_list(self, uuid_list: List[UUID]) -> List[WebSocket]:
-        return [self.websocket_dic[uuid] for uuid in uuid_list if uuid in self.websocket_dic]
+    def get_websocket_list_from_uuid_list(
+        self, uuid_list: List[UUID]
+    ) -> List[WebSocket]:
+        return [
+            self.websocket_dic[uuid] for uuid in uuid_list if uuid in self.websocket_dic
+        ]
