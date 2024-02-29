@@ -25,7 +25,7 @@ class WaypointRepository:
         return route
 
     @staticmethod
-    def swap_waypoints(route: Route, waypoint1: Waypoint, waypoint2: Waypoint):
+    def swap_waypoints(waypoint1: Waypoint, waypoint2: Waypoint):
         waypoint1.order, waypoint2.order = waypoint2.order, waypoint1.order
         return waypoint1, waypoint2
 

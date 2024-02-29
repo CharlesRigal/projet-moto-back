@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -32,10 +34,10 @@ class RouteRepository:
         route.members.pop(route.members.index(user))
         return route
 
-    def get_route_by_id(self, route_id: str):
-        route = self.db.query(Route).filter(Route.id == route_id).first()
+    def get_route_by_id(self, route_id: UUID) -> Route:
+        route = self.db.query(Route).get(route_id)
         if not route:
-            raise SelectNotFoundError()
+            raise SelectNotFoundError("Route not found")
         return route
 
     def get_all(self):

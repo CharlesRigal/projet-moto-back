@@ -5,32 +5,30 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
-from dto.friends import FriendCreateRequest, FriendUpdateRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
 from dto.waypoints import WayPointCreateRequest
 from exceptions.general import (
     ItemNotInListError,
-    ItemUpdateError,
     ItemCreateError,
     SelectNotFoundError,
-    InvalidJWTError,
 )
-from models.friend import Friend, FriendsStatus
 from models.routes import Route
-from models.waypoint import Waypoint
 from models.users import User
-from repositories.friends import FriendRepository
+from models.waypoint import Waypoint
 from repositories.routes import RouteRepository
 from repositories.users import UserRepository
-from repositories.waypoints import WaypointRepository
 from services.security import get_current_user
 from services.utils import get_db
+from routers.websocket import (
+    send_message_to_friends,
+    send_message_to_other_user_of_route_exept_sender,
+)
 
 router = APIRouter(prefix="/api/v0.1/routes", tags=["routes"])
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
-user_dependency = Annotated[dict, Depends(get_current_user)]
+user_dependency = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -210,7 +208,7 @@ def remove_member(
 
 
 @router.put("/{route_id}/waypoints", status_code=status.HTTP_200_OK)
-def update_waypoints(
+async def update_waypoints(
     db: db_dependency,
     user: user_dependency,
     route_id: UUID,
@@ -225,7 +223,6 @@ def update_waypoints(
     Code 500 "update-failure": erreur au niveau de la base de données
     """
     route_repository = RouteRepository(db)
-    waypoint_repository = WaypointRepository(db)
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
@@ -258,6 +255,9 @@ def update_waypoints(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
         )
+    await send_message_to_other_user_of_route_exept_sender(
+        user, route, {"route-uuid": str(route.id)}
+    )
     return waypoints
 
 

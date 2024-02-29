@@ -45,7 +45,9 @@ async def web_socket_token_interceptor(
         raise WebSocketException(status.WS_1008_POLICY_VIOLATION, "Invalid token")
 
 
-def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: db_dependency):
+def get_current_user(
+    token: Annotated[str, Depends(oauth2_bearer)], db: db_dependency
+) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
