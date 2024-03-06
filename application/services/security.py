@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header
+from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header, Query
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -27,7 +27,7 @@ websocket_registry = WebSocketRegistry()
 
 
 async def web_socket_token_interceptor(
-    websocket: WebSocket, db: db_dependency, authorization: str = Header(...)
+    websocket: WebSocket, db: db_dependency, authorization: str = Query(..., alias="token")
 ) -> User:
     try:
         scheme, token = authorization.split()
