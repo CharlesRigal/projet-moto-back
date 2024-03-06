@@ -5,13 +5,11 @@ from sqlalchemy.orm import Session
 
 from exceptions.general import (
     ItemNotInListError,
-    ItemUpdateError,
     ItemCreateError,
     SelectNotFoundError,
 )
 from models.routes import Route
 from models.users import User
-import logging
 
 
 class RouteRepository:
