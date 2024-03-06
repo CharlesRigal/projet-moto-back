@@ -4,8 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from exceptions.general import SelectNotFoundError
-from models.users import User
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
 from services.security import get_current_user
