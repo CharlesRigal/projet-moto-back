@@ -134,11 +134,11 @@ def update(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="status-not-possible"
         )
-
     # everything is ok, update allowed
     friend_request.status = friend_update_request.status
 
     if friend_update_request.status == FriendsStatus.REMOVED:
+
         routes_user_1 = (
             db.query(Route)
             .filter(Route.owner_id == friend_request.target_user_id)
@@ -149,7 +149,6 @@ def update(
                 x for x in route.members if x.id != friend_request.requesting_user_id
             ]
             route.members = members_1
-            return route.to_dict()
         routes_user_2 = (
             db.query(Route)
             .filter(Route.owner_id == friend_request.requesting_user_id)
@@ -160,7 +159,6 @@ def update(
                 x for x in route.members if x.id != friend_request.target_user_id
             ]
             route.members = members_2
-            return route.to_dict()
     try:
         db.commit()
     except SQLAlchemyError:
