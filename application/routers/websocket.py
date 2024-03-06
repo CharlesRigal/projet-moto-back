@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from models.routes import Route
 from models.users import User
 from repositories.users import UserRepository
-from repositories.routes import RouteRepository
 from services.security import web_socket_token_interceptor
 from services.utils import get_db
 from services.WebsocketRegistry import WebSocketRegistry
@@ -40,6 +39,26 @@ async def send_message_to_other_user_of_route_exept_sender(
 
 @router.websocket("")
 async def websocket_connect(user: user_dependency, db: db_dependency):
+    """
+    WebSocket endpoint for connecting users.
+
+    Establishes a WebSocket connection for the user and sends status messages to their friends.
+
+    Args:
+        user (User): The authenticated user connecting to the WebSocket.
+        db (Session): The database session.
+
+    Raises:
+        WebSocketDisconnect: If the WebSocket connection is unexpectedly terminated.
+
+    Returns:
+        None
+
+    WebSocket messages:
+        - Upon connection, sends status messages to the user's friends indicating their connection status.
+        - Listens for incoming JSON messages from the user.
+        - Upon Route Update, sends route uuid to the member's of the route except sender
+    """
     user_repository = UserRepository(db)
     try:
         for friend in user_repository.get_friends_as_user(user):
