@@ -27,7 +27,9 @@ websocket_registry = WebSocketRegistry()
 
 
 async def web_socket_token_interceptor(
-    websocket: WebSocket, db: db_dependency, authorization: str = Query(..., alias="token")
+    websocket: WebSocket,
+    db: db_dependency,
+    authorization: str = Query(..., alias="token"),
 ) -> User:
     try:
         scheme, token = authorization.split()

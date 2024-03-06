@@ -33,7 +33,12 @@ async def send_message_to_other_user_of_route_exept_sender(
     user: User, route: Route, dict_for_json: dict
 ):
     await send_message_to_users_list(
-        [member for member in route.members if member != user], dict_for_json
+        [
+            member
+            for member in route.members + [route.owner]
+            if member != user and websocket_registry.connection_is_active(member.id)
+        ],
+        dict_for_json,
     )
 
 
