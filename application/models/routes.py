@@ -56,4 +56,5 @@ class Route(Base, SerializerMixin):
         back_populates="route",
         foreign_keys=[Waypoint.route_id],
         lazy="selectin",
+        cascade="all, delete",
     )

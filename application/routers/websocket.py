@@ -19,7 +19,14 @@ websocket_registry = WebSocketRegistry()
 
 async def send_message_to_users_list(users: list[User], dict_for_json: dict):
     for user in users:
-        await user.websocket.send_json(dict_for_json)
+        try:
+            if websocket_registry.connection_is_active(user.id):
+                await user.websocket.send_json(dict_for_json)
+        except RuntimeError:
+            print(
+                "log: user have an closed but we try to send messagewebsocket="
+                + user.username
+            )
 
 
 async def send_message_to_friends(user: User, dict_for_json: dict, db: db_dependency):
@@ -33,11 +40,7 @@ async def send_message_to_other_user_of_route_exept_sender(
     user: User, route: Route, dict_for_json: dict
 ):
     await send_message_to_users_list(
-        [
-            member
-            for member in route.members + [route.owner]
-            if member != user and websocket_registry.connection_is_active(member.id)
-        ],
+        [member for member in route.members + [route.owner] if member != user],
         dict_for_json,
     )
 
