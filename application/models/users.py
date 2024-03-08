@@ -54,6 +54,7 @@ class User(Base, SerializerMixin):
         foreign_keys=[Route.owner_id],
         lazy="selectin",
         join_depth=1,
+        cascade="all, delete",
     )
 
     routes_joined = relationship(
@@ -62,6 +63,7 @@ class User(Base, SerializerMixin):
         back_populates="members",
         lazy="selectin",
         join_depth=1,
+        cascade="all, delete",
     )
 
     friends_sent = relationship(
@@ -70,6 +72,7 @@ class User(Base, SerializerMixin):
         foreign_keys=[Friend.requesting_user_id],
         lazy="selectin",
         join_depth=1,
+        cascade="all,delete",
     )
 
     friends_received = relationship(
@@ -78,4 +81,5 @@ class User(Base, SerializerMixin):
         foreign_keys=[Friend.target_user_id],
         lazy="selectin",
         join_depth=1,
+        cascade="all,delete",
     )
