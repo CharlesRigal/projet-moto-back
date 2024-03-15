@@ -1,4 +1,3 @@
-import os
 import platform
 
 from routers import auth, friends, users, admin, routes, websocket
@@ -7,6 +6,9 @@ import uvicorn
 from config.database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from config.database import Base
+from config.env import get_settings
+
+settings = get_settings()
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,13 +28,13 @@ app.include_router(friends.router)
 app.include_router(routes.router)
 app.include_router(websocket.router)
 
+
 if __name__ == "__main__":
-    if os.environ.get("ENV") == "development":
+    if settings.env == "development":
         uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True)
     else:
         if platform.system() != "Linux":
             raise OSError("Production setting is only suitable on linux")
-        uvicorn.run("main:app", host="0.0.0.0", port=8888, reload=True)
         from starter.StandaloneApplication import (
             number_of_workers,
             StandaloneApplication,
