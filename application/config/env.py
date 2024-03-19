@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM")
     jwt_expire_hours: int = os.getenv("JWT_EXPIRE_HOURS")
     env: str = os.getenv("ENV")
-    certfile: Optional[FilePath] = Field(None, description="Path to the certificate file")
+    certfile: Optional[FilePath] = Field(
+        None, description="Path to the certificate file"
+    )
     keyfile: Optional[FilePath] = Field(None, description="Path to the key file")
 
     class Config:
@@ -29,7 +31,9 @@ def get_settings():
     try:
         return Settings()
     except ValidationError as e:
-        raise EnvironmentError(f"Missig environement variables or malformed: {e.errors()}")
+        raise EnvironmentError(
+            f"Missig environement variables or malformed: {e.errors()}"
+        )
 
     except PydanticValueError as e:
         raise EnvironmentError(f"Invalid value for environment variable: {e}")

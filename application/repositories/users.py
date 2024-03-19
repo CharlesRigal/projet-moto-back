@@ -1,6 +1,7 @@
 from typing import List
 from uuid import UUID
 
+from sqlalchemy import exc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -17,11 +18,19 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def delete_user(self, user: User) -> bool:
+        try:
+            self.db.delete(user)
+            self.db.commit()
+            return True
+        except exc.SQLAlchemyError:
+            return False
+
     def create(self, user: User):
         try:
             self.db.add(user)
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             self.db.rollback()
             raise ItemCreateError()
 
