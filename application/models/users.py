@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from fastapi import WebSocket
@@ -6,14 +7,19 @@ import uuid
 from sqlalchemy import Column, String, Boolean, UUID
 from sqlalchemy.orm import relationship
 
-from config.database import Base
-from models.friend import Friend
-from models.routes import Route, route_member_association_table
+from application.config.database import Base
+from application.models.friend import Friend
+from application.models.routes import Route, route_member_association_table
 from sqlalchemy_serializer import SerializerMixin
 
-from services.WebsocketRegistry import WebSocketRegistry
+from application.services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
+
+
+class Role(str, Enum):
+    ADMIN = "admin"
+    USER = "user"
 
 
 class User(Base, SerializerMixin):
@@ -34,7 +40,13 @@ class User(Base, SerializerMixin):
     email = Column(String(100), unique=True)
     hashed_password = Column(String(254))
     is_active = Column(Boolean, default=True)
-    role = Column(String(30), default="user")
+    role = Column(String(30), default=Role.USER)
+
+    def have_role(self, str: role):
+        if str == self.role:
+            return True
+        else:
+            return False
 
     @property
     def websocket(self) -> Optional[WebSocket]:

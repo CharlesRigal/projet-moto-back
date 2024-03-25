@@ -1,4 +1,4 @@
-from config.database import Base
+from application.config.database import Base
 
 import uuid
 
@@ -29,6 +29,3 @@ class Waypoint(Base, SerializerMixin):
         foreign_keys=[route_id],
         back_populates="waypoints",
     )
-
-    # def __eq__(self, other):
-    #     return self.id == other.id

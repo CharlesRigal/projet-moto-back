@@ -1,30 +1,56 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from starlette import status
 
-from repositories.users import UserRepository
-from services.security import get_current_user
-from services.utils import get_db
+from application.repositories.users import UserRepository
+from application.services.security import get_current_user
+from application.services.utils import get_db
 
-from models.users import User
+from application.models.users import User
+
+from application.services.security import authenticate_user, get_current_user_admin
 
 router = APIRouter(prefix="/api/v0.1/users", tags=["users"])
 
 db_dependency = Depends(get_db)
 user_dependency = Depends(get_current_user)
 
+@router.delete("/remove_my_self", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_account(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = db_dependency
+):
+    """
+    Deletes the account of the currently authenticated user.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm): The form data containing the username and password of the user.
+        db (Session, optional): The database session dependency. Defaults to db_dependency.
+
+    Raises:
+        HTTPException: Raised if the user is not authenticated or if deletion fails.
+
+    Returns:
+        Response: A response with status code 204 (No Content) if the deletion is successful.
+    """
+    my_self = authenticate_user(db, form_data.username, form_data.password)
+    UserRepository(db).delete(my_self)
+
 
 @router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
-    username: str, db: Session = db_dependency, user: User = user_dependency
+        username: str,
+        user_admin: get_current_user_admin = Depends(),
+        db: Session = db_dependency
 ):
     """
     Deletes a user by their username.
 
     Args:
         username (str): The username of the user to delete.
+        user_admin (User): The current user who is an admin.
         db (Session, optional): The database session dependency. Defaults to db_dependency.
-        user (User, optional): The current user dependency. Defaults to user_dependency.
 
     Raises:
         HTTPException: Raised if the user is not authorized to perform the deletion.
@@ -34,13 +60,10 @@ def delete_user(
         or status code 404 (Not Found) if the user to delete is not found.
     """
     user_repository = UserRepository(db)
-    user_to_remove = user_repository.get_user_by_username(username)
-    if user.role == "admin" or user.username == username:
-        if not user_repository.delete_user(user_to_remove):
-            return Response(status_code=status.HTTP_404_NOT_FOUND)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+    if not user_repository.delete_user(username):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/", status_code=status.HTTP_200_OK)

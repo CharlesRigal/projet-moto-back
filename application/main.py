@@ -1,12 +1,12 @@
 import platform
 
-from routers import auth, friends, users, admin, routes, websocket
+from application.routers import auth, friends, users, admin, routes, websocket
 from fastapi import FastAPI
 import uvicorn
-from config.database import engine
+from application.config.database import engine
 from fastapi.middleware.cors import CORSMiddleware
-from config.database import Base
-from config.env import get_settings
+from application.config.database import Base
+from application.config.env import get_settings
 
 settings = get_settings()
 
