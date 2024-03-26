@@ -1,8 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemCreateError, SelectNotFoundError
-from models.friend import Friend
+from application.exceptions.general import ItemCreateError, SelectNotFoundError
+from application.models.friend import Friend
 
 
 class FriendRepository:
@@ -13,7 +13,7 @@ class FriendRepository:
         try:
             self.db.add(friends)
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             self.db.rollback()
             raise ItemCreateError()
 

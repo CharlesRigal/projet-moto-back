@@ -2,8 +2,8 @@ import uuid
 
 from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from config.database import Base
-from models.waypoint import Waypoint
+from application.config.database import Base
+from application.models.waypoint import Waypoint
 from sqlalchemy_serializer import SerializerMixin
 
 route_member_association_table = Table(

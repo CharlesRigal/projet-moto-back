@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from models.friend import FriendsStatus
+from application.models.friend import FriendsStatus
 
 
 class FriendCreateRequest(BaseModel):

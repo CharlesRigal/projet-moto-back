@@ -5,14 +5,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.friends import FriendCreateRequest, FriendUpdateRequest
-from exceptions.general import SelectNotFoundError, ItemCreateError
-from models.friend import Friend, FriendsStatus
-from models.routes import Route
-from repositories.friends import FriendRepository
-from repositories.users import UserRepository
-from services.security import get_current_user
-from services.utils import get_db
+from application.dto.friends import FriendCreateRequest, FriendUpdateRequest
+from application.exceptions.general import SelectNotFoundError, ItemCreateError
+from application.models.friend import Friend, FriendsStatus
+from application.models.routes import Route
+from application.repositories.friends import FriendRepository
+from application.repositories.users import UserRepository
+from application.services.security import get_current_user
+from application.services.utils import get_db
 
 
 router = APIRouter(prefix="/api/v0.1/friends", tags=["friends"])
@@ -59,7 +59,7 @@ def send_friend_request(
     friend_repository = FriendRepository(db)
     try:
         friend_repository.create(friend_request_model)
-    except ItemCreateError as e:
+    except ItemCreateError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure"
         )

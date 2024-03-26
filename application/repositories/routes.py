@@ -3,13 +3,13 @@ from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import (
+from application.exceptions.general import (
     ItemNotInListError,
     ItemCreateError,
     SelectNotFoundError,
 )
-from models.routes import Route
-from models.users import User
+from application.models.routes import Route
+from application.models.users import User
 
 
 class RouteRepository:
@@ -25,10 +25,7 @@ class RouteRepository:
             raise ItemCreateError()
 
     def remove_member(self, route: Route, user_to_delete: User):
-        try:
-            user = RouteRepository.get_member(route, user_to_delete.id)
-        except ItemNotInListError as e:
-            raise e
+        user = RouteRepository.get_member(route, user_to_delete.id)
         route.members.pop(route.members.index(user))
         return route
 

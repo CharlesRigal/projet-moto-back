@@ -5,15 +5,15 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dto.auth import CreateUserRequest, Token
-from exceptions.general import ItemCreateError, SelectNotFoundError
-from models.users import User
-from repositories.users import UserRepository
-from services.security import authenticate_user, create_jwt
-from services.utils import get_db
+from application.dto.auth import CreateUserRequest, Token
+from application.exceptions.general import ItemCreateError, SelectNotFoundError
+from application.models.users import User
+from application.repositories.users import UserRepository
+from application.services.security import authenticate_user, create_jwt
+from application.services.utils import get_db
 from fastapi.security import OAuth2PasswordRequestForm
-from config.env import get_settings
-from services.security import get_current_user
+from application.config.env import get_settings
+from application.services.security import get_current_user
 
 router = APIRouter(prefix="/api/v0.1/auth", tags=["auth"])
 db_dependency = Annotated[Session, Depends(get_db)]
@@ -50,13 +50,11 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
                 ]
             },
         )
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         pass
-    except HTTPException as e:
-        raise e
 
     try:
-        user = user_repository.get_user_by_username(create_user_request.username)
+        user_repository.get_user_by_username(create_user_request.username)
         # if the username already exists it will raise an exception
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -71,10 +69,8 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
                 ]
             },
         )
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         pass
-    except HTTPException as e:
-        raise e
 
     create_user_model = User(
         email=create_user_request.email,
@@ -83,7 +79,7 @@ def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     )
     try:
         user_repository.create(create_user_model)
-    except ItemCreateError as e:
+    except ItemCreateError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="creation-failure"
         )
@@ -108,7 +104,7 @@ def login_for_jwt(
     user_repository = UserRepository(db)
     try:
         user = user_repository.get_user_by_email(form_data.username)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect-id"
         )
@@ -136,14 +132,6 @@ def username_exists(db: db_dependency, username: str):
     user_repository = UserRepository(db)
     try:
         user_repository.get_user_by_username(username)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-
-# @router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
-# async def change_password(user: user_dependency, db: db_dependency, password_request: PasswordResetRequest):
-#     user_repository = UserRepository(db)
-#     user_model = user_repository.get_by_id(user.get('id'))
-#     if not bcrypt_context.verify(password_request.old_password, user_model.hashed_password):
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid password")
-#     user_model.hashed_password = bcrypt_context.hash(password_request.new_password)
