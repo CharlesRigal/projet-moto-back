@@ -40,7 +40,7 @@ class UserRepository:
             raise SelectNotFoundError()
         return user
 
-    def get_user_by_username(self, username: str):
+    def get_user_by_username(self, username: str) -> object:
         user = self.db.query(User).filter(User.username == username).first()
         if not user:
             raise SelectNotFoundError()

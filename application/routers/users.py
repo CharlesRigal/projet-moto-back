@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from starlette import status
 
+from application.repositories.friends import FriendRepository
 from application.repositories.users import UserRepository
 from application.services.security import get_current_user
 from application.services.utils import get_db
