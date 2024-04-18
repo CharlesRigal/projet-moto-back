@@ -2,4 +2,4 @@ __pycache__/
 .env
 .idea
 venv
-from ./alembic/versions
+/application/alembic/versions/*

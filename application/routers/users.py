@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import user
 from starlette import status
 
 from application.repositories.friends import FriendRepository
@@ -36,13 +37,16 @@ def delete_my_account(
         Response: A response with status code 204 (No Content) if the deletion is successful.
     """
     my_self = authenticate_user(db, form_data.username, form_data.password)
-    UserRepository(db).delete(my_self)
+    if UserRepository(db).delete_user(my_self):
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
         username: str,
-        user_admin: get_current_user_admin = Depends(),
+        get_current_user_admin = Depends(),
         db: Session = db_dependency
 ):
     """
