@@ -8,12 +8,12 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from starlette import status
 
-from config.env import get_settings
-from exceptions.general import InvalidJWTError
-from models.users import User
-from repositories.users import UserRepository
-from services.WebsocketRegistry import WebSocketRegistry
-from services.utils import get_db
+from application.config.env import get_settings
+from application.exceptions.general import InvalidJWTError
+from application.models.users import User
+from application.repositories.users import UserRepository
+from application.services.WebsocketRegistry import WebSocketRegistry
+from application.services.utils import get_db
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -54,15 +54,12 @@ def get_current_user(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         user_id: str = payload.get("id")
-        user_role: str = payload.get("role")
         if email is None or user_id is None:
-            # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
             raise InvalidJWTError()
         user_repository = UserRepository(db)
         user = user_repository.get_user_by_id(user_id)
         return user
     except JWTError:
-        # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         raise InvalidJWTError()
 
 

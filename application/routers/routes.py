@@ -5,21 +5,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
-from dto.routes import RouteCreateRequest, MemberAddRequest
-from dto.waypoints import WayPointCreateRequest
-from exceptions.general import (
+from application.dto.routes import RouteCreateRequest, MemberAddRequest
+from application.dto.waypoints import WayPointCreateRequest
+from application.exceptions.general import (
     ItemNotInListError,
     ItemCreateError,
     SelectNotFoundError,
 )
-from models.routes import Route
-from models.users import User
-from models.waypoint import Waypoint
-from repositories.routes import RouteRepository
-from repositories.users import UserRepository
-from services.security import get_current_user
-from services.utils import get_db
-from routers.websocket import (
+from application.models.routes import Route
+from application.models.users import User
+from application.models.waypoint import Waypoint
+from application.repositories.routes import RouteRepository
+from application.repositories.users import UserRepository
+from application.services.security import get_current_user
+from application.services.utils import get_db
+from application.routers.websocket import (
     send_message_to_other_user_of_route_exept_sender,
 )
 
@@ -91,7 +91,7 @@ def get_one_route(db: db_dependency, user: user_dependency, id: str):
     route_repository = RouteRepository(db)
     try:
         route = route_repository.get_route_by_id(id)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
         )
@@ -122,7 +122,7 @@ def add_member(
     route_repository = RouteRepository(db)
     try:
         route = route_repository.get_route_by_id(route_id)
-    except SelectNotFoundError as e:
+    except SelectNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
         )
@@ -258,43 +258,3 @@ async def update_waypoints(
         user, route, {"route-uuid": str(route.id)}
     )
     return waypoints
-
-
-#
-# @router.patch('/{route_id}', status_code=status.HTTP_204_NO_CONTENT)
-# def edit_waypoint(db: db_dependency, user: user_dependency, route_id: UUID, waypoint: WayPointEditRequest):
-#     """Permet d'éditer un point de trajet. Cela inclut l'echanger de l'ordre avec un autre point de trajet.\n
-#     Code 400: "order-out-of-range" : le nouvel ordre ne correspond pas a un autre point de trajet """
-#     route_repository = RouteRepository(db)
-#     waypoint_repository = WaypointRepository(db)
-#     try:
-#         route = route_repository.get_route_by_id(route_id)
-#     except SelectNotFoundError:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-#
-#     try:
-#         RouteRepository.get_member(route, user.id)
-#     except ItemNotInListError:
-#         if route.owner_id != user.id:
-#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found")
-#     try:
-#         original_waypoint = waypoint_repository.get_waypoint_by_id(waypoint.id)
-#
-#         if original_waypoint.route.id != route_id:
-#             raise SelectNotFoundError()
-#
-#     except SelectNotFoundError:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="waypoint-not-found")
-#
-#     # l'ordre a été changé, il faut l'échanger avec un autre Waypoint
-#     if original_waypoint.order != waypoint.order:
-#         try:
-#             other_waypoint = waypoint_repository.get_waypoint_by_order(route, waypoint.order)
-#         except ItemNotInListError:
-#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="order-out-of-range")
-#         original_waypoint, other_waypoint = WaypointRepository.swap_waypoints(route, original_waypoint, other_waypoint)
-#
-#     original_waypoint.name = waypoint.name
-#     original_waypoint.latitude = waypoint.latitude
-#     original_waypoint.longitude = waypoint.longitude
-#     db.commit()

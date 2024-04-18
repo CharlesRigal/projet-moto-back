@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import config.env as env
-import logging
+import application.config.env as env
 
 env_values = env.get_settings()
 

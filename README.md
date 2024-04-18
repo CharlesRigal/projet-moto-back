@@ -37,4 +37,6 @@ JWT_SECRET_KEY=****************************
 JWT_ALGORITHM=*****
 JWT_EXPIRE_HOURS=****
 ENV=development|production
+TEST_DATABASE_USER=username
+TEST_DATABASE_PASSWORD=password
 ```

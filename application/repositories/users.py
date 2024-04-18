@@ -1,13 +1,14 @@
 from typing import List
 from uuid import UUID
 
+from sqlalchemy import exc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
-from models.friend import FriendsStatus
-from models.users import User
-from services.WebsocketRegistry import WebSocketRegistry
+from application.exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
+from application.models.friend import FriendsStatus
+from application.models.users import User
+from application.services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
 
@@ -17,11 +18,19 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def delete_user(self, user: User) -> bool:
+        try:
+            self.db.delete(user)
+            self.db.commit()
+            return True
+        except exc.SQLAlchemyError:
+            return False
+
     def create(self, user: User):
         try:
             self.db.add(user)
             self.db.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             self.db.rollback()
             raise ItemCreateError()
 
@@ -31,7 +40,7 @@ class UserRepository:
             raise SelectNotFoundError()
         return user
 
-    def get_user_by_username(self, username: str):
+    def get_user_by_username(self, username: str) -> object:
         user = self.db.query(User).filter(User.username == username).first()
         if not user:
             raise SelectNotFoundError()
