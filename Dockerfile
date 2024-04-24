@@ -4,8 +4,7 @@ LABEL authors="RigalCh"
 EXPOSE 8888
 WORKDIR /src/
 
-COPY requirements.txt ./
-COPY application ./application
+COPY requirements.txt application ./
 
 RUN pip install -r requirements.txt
 
