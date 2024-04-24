@@ -5,15 +5,15 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from starlette import status
 
-from application.dto.auth import CreateUserRequest, Token
-from application.exceptions.general import ItemCreateError, SelectNotFoundError
-from application.models.users import User
-from application.repositories.users import UserRepository
-from application.services.security import authenticate_user, create_jwt
-from application.services.utils import get_db
+from dto.auth import CreateUserRequest, Token
+from exceptions.general import ItemCreateError, SelectNotFoundError
+from models.users import User
+from repositories.users import UserRepository
+from services.security import authenticate_user, create_jwt
+from services.utils import get_db
 from fastapi.security import OAuth2PasswordRequestForm
-from application.config.env import get_settings
-from application.services.security import get_current_user
+from config.env import get_settings
+from services.security import get_current_user
 
 router = APIRouter(prefix="/api/v0.1/auth", tags=["auth"])
 db_dependency = Annotated[Session, Depends(get_db)]
