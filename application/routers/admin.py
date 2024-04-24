@@ -5,13 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from application.exceptions.general import SelectNotFoundError
-from application.models.friend import Friend, FriendsStatus
-from application.models.routes import Route
-from application.models.users import User
-from application.services.security import get_current_user_admin
-from application.services.utils import get_db
-from application.repositories.users import UserRepository
+from exceptions.general import SelectNotFoundError
+from models.friend import Friend, FriendsStatus
+from models.routes import Route
+from models.users import User
+from services.security import get_current_user_admin
+from services.utils import get_db
+from repositories.users import UserRepository
 
 router = APIRouter(prefix="/api/v0.1/admin", tags=["admin"])
 db_dependency = Annotated[Session, Depends(get_db)]
