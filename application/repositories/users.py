@@ -5,10 +5,10 @@ from sqlalchemy import exc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from application.exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
-from application.models.friend import FriendsStatus
-from application.models.users import User
-from application.services.WebsocketRegistry import WebSocketRegistry
+from exceptions.general import ItemCreateError, ItemNotInListError, SelectNotFoundError
+from models.friend import FriendsStatus
+from models.users import User
+from services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
 
