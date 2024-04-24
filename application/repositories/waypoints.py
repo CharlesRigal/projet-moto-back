@@ -1,9 +1,9 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from application.exceptions.general import ItemCreateError, SelectNotFoundError
-from application.models.routes import Route
-from application.models.waypoint import Waypoint
+from exceptions.general import ItemCreateError, SelectNotFoundError
+from models.routes import Route
+from models.waypoint import Waypoint
 
 
 class WaypointRepository:

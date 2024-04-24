@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
-from application.config.database import Base, engine
-from application.models.users import User
+from config.database import Base, engine
+from models.users import User
 from .test_utils import engine, test_client, override_get_db
 
 

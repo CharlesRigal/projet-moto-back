@@ -8,12 +8,12 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from starlette import status
 
-from application.config.env import get_settings
-from application.exceptions.general import InvalidJWTError
-from application.models.users import User
-from application.repositories.users import UserRepository
-from application.services.WebsocketRegistry import WebSocketRegistry
-from application.services.utils import get_db
+from config.env import get_settings
+from exceptions.general import InvalidJWTError
+from models.users import User
+from repositories.users import UserRepository
+from services.WebsocketRegistry import WebSocketRegistry
+from services.utils import get_db
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

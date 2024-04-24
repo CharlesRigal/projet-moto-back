@@ -1,8 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from application.exceptions.general import ItemCreateError, SelectNotFoundError
-from application.models.friend import Friend
+from exceptions.general import ItemCreateError, SelectNotFoundError
+from models.friend import Friend
 
 
 class FriendRepository:

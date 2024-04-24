@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
-from application.dto.waypoints import WayPointCreateRequest
+from dto.waypoints import WayPointCreateRequest
 
 
 class RouteCreateRequest(BaseModel):

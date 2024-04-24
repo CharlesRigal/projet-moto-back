@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import user
 from starlette import status
 
-from application.repositories.friends import FriendRepository
-from application.repositories.users import UserRepository
-from application.services.security import get_current_user
-from application.services.utils import get_db
+from repositories.friends import FriendRepository
+from repositories.users import UserRepository
+from services.security import get_current_user
+from services.utils import get_db
 
-from application.models.users import User
+from models.users import User
 
-from application.services.security import authenticate_user, get_current_user_admin
+from services.security import authenticate_user, get_current_user_admin
 
 router = APIRouter(prefix="/api/v0.1/users", tags=["users"])
 

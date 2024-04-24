@@ -2,9 +2,10 @@ FROM python:latest
 LABEL authors="RigalCh"
 
 EXPOSE 8888
+WORKDIR /src/
 
-COPY application requirements.txt ./
+COPY requirements.txt application ./
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python", "main.py"]
+CMD ["python", "main.py"]

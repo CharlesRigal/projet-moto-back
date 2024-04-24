@@ -2,8 +2,6 @@ name: ci
 
 on:
   push:
-    branches:
-      - "master"
 
 jobs:
   push_to_registry:

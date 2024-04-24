@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import Column, String, Integer, Boolean, UUID, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
-from application.config.database import Base
+from config.database import Base
 from sqlalchemy_serializer import SerializerMixin
 
 

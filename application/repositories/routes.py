@@ -3,13 +3,13 @@ from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from application.exceptions.general import (
+from exceptions.general import (
     ItemNotInListError,
     ItemCreateError,
     SelectNotFoundError,
 )
-from application.models.routes import Route
-from application.models.users import User
+from models.routes import Route
+from models.users import User
 
 
 class RouteRepository:

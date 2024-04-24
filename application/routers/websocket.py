@@ -3,12 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
-from application.models.routes import Route
-from application.models.users import User
-from application.repositories.users import UserRepository
-from application.services.security import web_socket_token_interceptor
-from application.services.utils import get_db
-from application.services.WebsocketRegistry import WebSocketRegistry
+from models.routes import Route
+from models.users import User
+from repositories.users import UserRepository
+from services.security import web_socket_token_interceptor
+from services.utils import get_db
+from services.WebsocketRegistry import WebSocketRegistry
 
 router = APIRouter(prefix="/ws", tags=["websocket"])
 

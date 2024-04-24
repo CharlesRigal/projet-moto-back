@@ -5,21 +5,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
-from application.dto.routes import RouteCreateRequest, MemberAddRequest
-from application.dto.waypoints import WayPointCreateRequest
-from application.exceptions.general import (
+from dto.routes import RouteCreateRequest, MemberAddRequest
+from dto.waypoints import WayPointCreateRequest
+from exceptions.general import (
     ItemNotInListError,
     ItemCreateError,
     SelectNotFoundError,
 )
-from application.models.routes import Route
-from application.models.users import User
-from application.models.waypoint import Waypoint
-from application.repositories.routes import RouteRepository
-from application.repositories.users import UserRepository
-from application.services.security import get_current_user
-from application.services.utils import get_db
-from application.routers.websocket import (
+from models.routes import Route
+from models.users import User
+from models.waypoint import Waypoint
+from repositories.routes import RouteRepository
+from repositories.users import UserRepository
+from services.security import get_current_user
+from services.utils import get_db
+from routers.websocket import (
     send_message_to_other_user_of_route_exept_sender,
 )
 
