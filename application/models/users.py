@@ -7,12 +7,12 @@ import uuid
 from sqlalchemy import Column, String, Boolean, UUID
 from sqlalchemy.orm import relationship
 
-from application.config.database import Base
-from application.models.friend import Friend
-from application.models.routes import Route, route_member_association_table
+from config.database import Base
+from models.friend import Friend
+from models.routes import Route, route_member_association_table
 from sqlalchemy_serializer import SerializerMixin
 
-from application.services.WebsocketRegistry import WebSocketRegistry
+from services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
 
