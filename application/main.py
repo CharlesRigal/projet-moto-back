@@ -45,4 +45,4 @@ if __name__ == "__main__":
             "workers": number_of_workers(),
             "worker_class": "uvicorn.workers.UvicornWorker",
         }
-        Standalone(app, options).run()
+        StandaloneApplication(app, options).run()
