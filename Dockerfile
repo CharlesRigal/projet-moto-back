@@ -2,9 +2,10 @@ FROM python:latest
 LABEL authors="RigalCh"
 
 EXPOSE 8888
-
-COPY application requirements.txt /src/
 WORKDIR /src/
+
+COPY requirements.txt ./
+COPY application ./application
 
 RUN pip install -r requirements.txt
 
