@@ -20,7 +20,6 @@ user_dependency = Depends(get_current_user)
 
 @router.delete("/remove_my_self", status_code=status.HTTP_204_NO_CONTENT)
 def delete_my_account(
-    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = db_dependency
 ):
     """
@@ -36,11 +35,11 @@ def delete_my_account(
     Returns:
         Response: A response with status code 204 (No Content) if the deletion is successful.
     """
-    my_self = authenticate_user(db, form_data.username, form_data.password)
-    if UserRepository(db).delete_user(my_self):
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    else:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    # my_self = authenticate_user(db, form_data.username, form_data.password)
+    # if UserRepository(db).delete_user(my_self):
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    #else:
+    #    return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
