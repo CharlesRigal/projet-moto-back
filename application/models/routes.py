@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
+
 from config.database import Base
 from models.waypoint import Waypoint
 from sqlalchemy_serializer import SerializerMixin
@@ -37,7 +38,7 @@ class Route(Base, SerializerMixin):
     description = Column(Text())
     is_public = Column(Boolean())
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    date = Column(DateTime, default=datetime.utcnow)
+    date = Column(DateTime, default=datetime.now())
 
     owner = relationship(
         "User",
