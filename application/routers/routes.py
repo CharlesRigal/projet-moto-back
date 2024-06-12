@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -29,6 +30,47 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[User, Depends(get_current_user)]
 
+@router.put("/{route_id}", status_code=status.HTTP_200_OK)
+async def update_route(
+    route_id: UUID,
+    db: db_dependency,
+    user: user_dependency,
+    route_update: RouteCreateRequest
+):
+    route_repository = RouteRepository(db)
+    try:
+        route = route_repository.get_route_by_id(route_id)
+        print(route.waypoints)
+    except SelectNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
+        )
+
+    if route.owner_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="permission-denied"
+        )
+
+    if route_update.date:
+        try:
+            route.date = route_update.date
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="invalid-date-format"
+            )
+    else:
+        route.date = datetime.now()
+
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
+
+    return route.to_dict()
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_route(db: db_dependency, user: user_dependency, route: RouteCreateRequest):
