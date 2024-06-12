@@ -12,11 +12,6 @@ class RouteCreateRequest(BaseModel):
     waypoints: Optional[List[WayPointCreateRequest]] = None
     date: Optional[datetime] = None
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S"),
-        }
-
 
 class MemberAddRequest(BaseModel):
     id: str = Field()
