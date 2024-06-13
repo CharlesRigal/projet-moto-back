@@ -17,7 +17,7 @@ Pour démarrer le developpement
 
 (venv) > cd application
 
-(venv) > uvicorn main:app --reload
+(venv) > uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Pour modifier la base de données
