@@ -18,10 +18,9 @@ router = APIRouter(prefix="/api/v0.1/users", tags=["users"])
 db_dependency = Depends(get_db)
 user_dependency = Depends(get_current_user)
 
+
 @router.delete("/remove_my_self", status_code=status.HTTP_204_NO_CONTENT)
-def delete_my_account(
-    db: Session = db_dependency
-):
+def delete_my_account(db: Session = db_dependency):
     """
     Deletes the account of the currently authenticated user.
 
@@ -38,15 +37,13 @@ def delete_my_account(
     # my_self = authenticate_user(db, form_data.username, form_data.password)
     # if UserRepository(db).delete_user(my_self):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-    #else:
+    # else:
     #    return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
-        username: str,
-        get_current_user_admin = Depends(),
-        db: Session = db_dependency
+    username: str, get_current_user_admin=Depends(), db: Session = db_dependency
 ):
     """
     Deletes a user by their username.

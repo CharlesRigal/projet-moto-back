@@ -64,7 +64,8 @@ class Route(Base, SerializerMixin):
 
     def to_dict(self):
         serialized = super().to_dict()
-        if 'date' in serialized and serialized['date']:
-            serialized['date'] = datetime.strptime(serialized['date'], "%Y-%m-%d %H:%M:%S").strftime(
-                '%Y-%m-%dT%H:%M:%S')
+        if "date" in serialized and serialized["date"]:
+            serialized["date"] = datetime.strptime(
+                serialized["date"], "%Y-%m-%d %H:%M:%S"
+            ).strftime("%Y-%m-%dT%H:%M:%S")
         return serialized

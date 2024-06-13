@@ -24,7 +24,7 @@ def generate_data(db: db_dependency):
     user = User(
         username="user1",
         email="email@example.com",
-        hashed_password= hashed_pass,
+        hashed_password=hashed_pass,
         is_active=True,
         role="admin",
     )

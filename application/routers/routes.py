@@ -30,12 +30,13 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[User, Depends(get_current_user)]
 
+
 @router.put("/{route_id}", status_code=status.HTTP_200_OK)
 async def update_route(
     route_id: UUID,
     db: db_dependency,
     user: user_dependency,
-    route_update: RouteCreateRequest
+    route_update: RouteCreateRequest,
 ):
     route_repository = RouteRepository(db)
     try:
@@ -57,7 +58,7 @@ async def update_route(
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="invalid-date-format"
+                detail="invalid-date-format",
             )
     else:
         route.date = datetime.now()
@@ -71,6 +72,7 @@ async def update_route(
         )
 
     return route.to_dict()
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_route(db: db_dependency, user: user_dependency, route: RouteCreateRequest):

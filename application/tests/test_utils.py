@@ -27,6 +27,7 @@ def override_get_db():
     finally:
         db.close()
 
+
 def purge_database():
     with engine.connect() as connection:
         for table in reversed(Base.metadata.sorted_tables):

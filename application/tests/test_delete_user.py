@@ -20,7 +20,9 @@ def teardown_module(module):
 
 @pytest.fixture
 def test_user(db: Session):
-    user = User(username="test_user", email="test@example.com", hashed_password="password123")
+    user = User(
+        username="test_user", email="test@example.com", hashed_password="password123"
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -28,7 +30,9 @@ def test_user(db: Session):
 
 
 def test_delete_own_account_with_valid_credentials(test_user: User, db: Session):
-    response = test_client.delete("/remove_my_self", headers={"Authorization": "Bearer ACCESS_TOKEN_HERE"})
+    response = test_client.delete(
+        "/remove_my_self", headers={"Authorization": "Bearer ACCESS_TOKEN_HERE"}
+    )
 
     assert response.status_code == 204
 

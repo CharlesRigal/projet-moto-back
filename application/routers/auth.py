@@ -134,4 +134,3 @@ def username_exists(db: db_dependency, username: str):
         user_repository.get_user_by_username(username)
     except SelectNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-

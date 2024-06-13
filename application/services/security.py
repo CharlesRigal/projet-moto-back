@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from config.env import get_settings
-from exceptions.general import InvalidJWTError
+from exceptions.general import InvalidJWTError, SelectNotFoundError
 from models.users import User
 from repositories.users import UserRepository
 from services.WebsocketRegistry import WebSocketRegistry
@@ -60,6 +60,8 @@ def get_current_user(
         user = user_repository.get_user_by_id(user_id)
         return user
     except JWTError:
+        raise InvalidJWTError()
+    except SelectNotFoundError:
         raise InvalidJWTError()
 
 
