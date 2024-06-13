@@ -1,5 +1,7 @@
+import uuid
 from datetime import timedelta, datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header, Query
 from fastapi.security import OAuth2PasswordBearer
@@ -53,7 +55,7 @@ def get_current_user(
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        user_id: str = payload.get("id")
+        user_id: UUID = payload.get("id")
         if email is None or user_id is None:
             raise InvalidJWTError()
         user_repository = UserRepository(db)
