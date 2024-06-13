@@ -95,3 +95,6 @@ class User(Base, SerializerMixin):
         join_depth=1,
         cascade="all,delete",
     )
+
+    def __str__(self):
+        return "User: {}".format(self.username)
