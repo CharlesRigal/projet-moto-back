@@ -1,10 +1,12 @@
 import uuid
 
-from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text
+from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
+
 from config.database import Base
 from models.waypoint import Waypoint
 from sqlalchemy_serializer import SerializerMixin
+from datetime import datetime
 
 route_member_association_table = Table(
     "route_member_association_table",
@@ -36,6 +38,7 @@ class Route(Base, SerializerMixin):
     description = Column(Text())
     is_public = Column(Boolean())
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    date = Column(DateTime, default=None)
 
     owner = relationship(
         "User",
@@ -58,3 +61,10 @@ class Route(Base, SerializerMixin):
         lazy="selectin",
         cascade="all, delete",
     )
+
+    def to_dict(self):
+        serialized = super().to_dict()
+        if 'date' in serialized and serialized['date']:
+            serialized['date'] = datetime.strptime(serialized['date'], "%Y-%m-%d %H:%M:%S").strftime(
+                '%Y-%m-%dT%H:%M:%S')
+        return serialized
