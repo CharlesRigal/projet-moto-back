@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, WebSocketDisconnect
@@ -82,7 +83,11 @@ async def websocket_connect(user: user_dependency, db: db_dependency):
                     {"user-uuid": str(friend.id), "status": 0}
                 )
         while True:
-            print(await user.websocket.receive_json())
+            try:
+                json = await user.websocket.receive_json()
+                await user.websocket.send_json(json)
+            except JSONDecodeError:
+                await user.websocket.send_json({"error": "malformed JSON"})
     except WebSocketDisconnect:
         await send_message_to_friends(
             user, {"user-uuid": str(user.id), "status": 0}, db
