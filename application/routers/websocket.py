@@ -22,7 +22,6 @@ async def send_message_to_users_list(users: list[User], dict_for_json: dict):
         try:
             if websocket_registry.connection_is_active(user.id):
                 await user.websocket.send_json(dict_for_json)
-                print("websocket message send to : " + user.username)
         except RuntimeError:
             print(
                 "log: user have an closed but we try to send messagewebsocket="
@@ -83,7 +82,7 @@ async def websocket_connect(user: user_dependency, db: db_dependency):
                     {"user-uuid": str(friend.id), "status": 0}
                 )
         while True:
-            await user.websocket.receive_json()
+            print(await user.websocket.receive_json())
     except WebSocketDisconnect:
         await send_message_to_friends(
             user, {"user-uuid": str(user.id), "status": 0}, db
