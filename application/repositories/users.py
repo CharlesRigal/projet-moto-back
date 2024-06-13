@@ -35,13 +35,13 @@ class UserRepository:
             raise ItemCreateError()
 
     def get_user_by_id(self, user_id: UUID) -> User:
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = self.db.query(User).filter(User.id.match(user_id)).first()
         if not user:
             raise SelectNotFoundError()
         return user
 
     def get_user_by_username(self, username: str) -> object:
-        user = self.db.query(User).filter(User.username == username).first()
+        user = self.db.query(User).filter(User.username.match(username)).first()
         if not user:
             raise SelectNotFoundError()
         return user
@@ -51,7 +51,7 @@ class UserRepository:
         return self.db.query(User).filter(User.username.like(search)).all()
 
     def get_user_by_email(self, email: str):
-        user = self.db.query(User).filter(User.email == email).first()
+        user = self.db.query(User).filter(User.email.match(email)).first()
         if not user:
             raise SelectNotFoundError()
         return user
