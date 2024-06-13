@@ -35,7 +35,7 @@ class UserRepository:
             raise ItemCreateError()
 
     def get_user_by_id(self, user_id: UUID) -> User:
-        user = self.db.query(User).get()
+        user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             raise SelectNotFoundError()
         return user
