@@ -84,7 +84,10 @@ if __name__ == "__main__":
     else:
         if platform.system() != "Linux":
             raise OSError("Production setting is only suitable on Linux")
-        from starter.StandaloneApplication import number_of_workers, StandaloneApplication
+        from starter.StandaloneApplication import (
+            number_of_workers,
+            StandaloneApplication,
+        )
 
         options = {
             "bind": "0.0.0.0:8888",

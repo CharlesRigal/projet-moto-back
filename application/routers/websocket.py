@@ -27,16 +27,19 @@ async def send_message_to_users_list(users: list[User], dict_for_json: dict):
                 logging.info(f"send message to {user.username}")
         except RuntimeError:
             logging.info(
-                f"log: user {user.username} have an closed websocket but we try to send ws: {dict_for_json}")
+                f"log: user {user.username} have an closed websocket but we try to send ws: {dict_for_json}"
+            )
 
 
-async def send_message_to_connected_friends(user: User, dict_for_json: dict, db: db_dependency):
+async def send_message_to_connected_friends(
+    user: User, dict_for_json: dict, db: db_dependency
+):
     user_repository = UserRepository(db)
     connected_friends = user_repository.get_connected_friends(user)
-    logging.info(f"send message to {user.username} connected friends[{connected_friends}]")
-    await send_message_to_users_list(
-        connected_friends, dict_for_json
+    logging.info(
+        f"send message to {user.username} connected friends[{connected_friends}]"
     )
+    await send_message_to_users_list(connected_friends, dict_for_json)
 
 
 async def send_message_to_other_user_of_route_except_sender(

@@ -5,7 +5,7 @@ from sqlite3 import DatabaseError
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Header, Query
+from fastapi import Depends, HTTPException, WebSocketException, WebSocket, Query
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
