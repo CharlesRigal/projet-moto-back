@@ -1,5 +1,7 @@
+import logging
 import uuid
 from datetime import timedelta, datetime
+from sqlite3 import DatabaseError
 from typing import Annotated
 from uuid import UUID
 
@@ -59,8 +61,12 @@ def get_current_user(
         if email is None or user_id is None:
             raise InvalidJWTError()
         user_repository = UserRepository(db)
-        user = user_repository.get_user_by_id(user_id)
-        return user
+        try:
+            user = user_repository.get_user_by_id(user_id)
+            return user
+        except DatabaseError:
+            logging.info(f"Error on request loggin for user {payload}")
+            raise InvalidJWTError()
     except JWTError:
         raise InvalidJWTError()
     except SelectNotFoundError:
