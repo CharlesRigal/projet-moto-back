@@ -84,12 +84,9 @@ class UserRepository:
     @staticmethod
     def get_connected_friends(user: User) -> List[User]:
         users = []
-        for friend in user.friends_received + user.friends_sent:
-            if (
-                friend.status == FriendsStatus.ACCEPTED
-                and websockets_registry.connection_is_active(friend.requesting_user.id)
-            ):
-                users.append(friend.requesting_user)
+        for friend_user in UserRepository.get_friends_as_user(user):
+            if websockets_registry.connection_is_active(friend_user.id):
+                users.append(friend_user)
         return users
 
     @staticmethod

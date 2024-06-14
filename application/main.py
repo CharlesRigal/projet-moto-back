@@ -1,3 +1,5 @@
+import argparse
+import logging
 import platform
 
 from routers import auth, friends, users, admin, routes, websocket
@@ -11,6 +13,8 @@ from config.env import get_settings
 settings = get_settings()
 
 Base.metadata.create_all(bind=engine)
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 origins = ["*"]
@@ -30,11 +34,15 @@ app.include_router(websocket.router)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run FastAPI application with Uvicorn.")
+    parser.add_argument('--log-config', type=str, default="./log_conf.yaml", help='Path to log configuration file')
+    args = parser.parse_args()
+
     if settings.env == "development":
-        uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True)
+        uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True, log_config=args.log_config)
     else:
         if platform.system() != "Linux":
-            raise OSError("Production setting is only suitable on linux")
+            raise OSError("Production setting is only suitable on Linux")
         from starter.StandaloneApplication import (
             number_of_workers,
             StandaloneApplication,
@@ -44,5 +52,6 @@ if __name__ == "__main__":
             "bind": "%s:%s" % ("0.0.0.0", "8888"),
             "workers": number_of_workers(),
             "worker_class": "uvicorn.workers.UvicornWorker",
+            "logconfig": args.log_config,
         }
         StandaloneApplication(app, options).run()

@@ -97,4 +97,4 @@ class User(Base, SerializerMixin):
     )
 
     def __str__(self):
-        return "User: {}".format(self.username)
+        return f"User: {self.username}"

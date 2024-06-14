@@ -21,7 +21,7 @@ from repositories.users import UserRepository
 from services.security import get_current_user
 from services.utils import get_db
 from routers.websocket import (
-    send_message_to_other_user_of_route_exept_sender,
+    send_message_to_other_user_of_route_except_sender,
 )
 
 router = APIRouter(prefix="/api/v0.1/routes", tags=["routes"])
@@ -298,7 +298,7 @@ async def update_waypoints(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
         )
-    await send_message_to_other_user_of_route_exept_sender(
+    await send_message_to_other_user_of_route_except_sender(
         user, route, {"route-uuid": str(route.id)}
     )
     return waypoints

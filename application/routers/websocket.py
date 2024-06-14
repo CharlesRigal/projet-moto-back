@@ -1,3 +1,4 @@
+import logging
 from json import JSONDecodeError
 from typing import Annotated
 
@@ -23,21 +24,22 @@ async def send_message_to_users_list(users: list[User], dict_for_json: dict):
         try:
             if websocket_registry.connection_is_active(user.id):
                 await user.websocket.send_json(dict_for_json)
+                logging.info(f"send message to {user.username}")
         except RuntimeError:
-            print(
-                "log: user have an closed but we try to send messagewebsocket="
-                + user.username
-            )
+            logging.info(
+                f"log: user {user.username} have an closed websocket but we try to send ws: {dict_for_json}")
 
 
-async def send_message_to_friends(user: User, dict_for_json: dict, db: db_dependency):
+async def send_message_to_connected_friends(user: User, dict_for_json: dict, db: db_dependency):
     user_repository = UserRepository(db)
+    connected_friends = user_repository.get_connected_friends(user)
+    logging.info(f"send message to {user.username} connected friends[{connected_friends}]")
     await send_message_to_users_list(
-        user_repository.get_connected_friends(user), dict_for_json
+        connected_friends, dict_for_json
     )
 
 
-async def send_message_to_other_user_of_route_exept_sender(
+async def send_message_to_other_user_of_route_except_sender(
     user: User, route: Route, dict_for_json: dict
 ):
     await send_message_to_users_list(
@@ -86,10 +88,12 @@ async def websocket_connect(user: user_dependency, db: db_dependency):
             try:
                 json = await user.websocket.receive_json()
                 await user.websocket.send_json(json)
+                logging.info(f"websocket message from {user.username}")
             except JSONDecodeError:
                 await user.websocket.send_json({"error": "malformed JSON"})
     except WebSocketDisconnect:
-        await send_message_to_friends(
+        logging.info(f"websocket disconnected {user.username}")
+        await send_message_to_connected_friends(
             user, {"user-uuid": str(user.id), "status": 0}, db
         )
         del user.websocket
