@@ -67,7 +67,7 @@ def get_current_user(
         try:
             user = user_repository.get_user_by_id(user_id)
             return user
-        except DatabaseError:
+        except Exception:
             logging.info(f"Error on request loggin for user {payload}")
             raise InvalidJWTError()
     except JWTError:
