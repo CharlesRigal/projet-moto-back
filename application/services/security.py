@@ -1,5 +1,4 @@
 import logging
-import uuid
 from datetime import timedelta, datetime
 from sqlite3 import DatabaseError
 from typing import Annotated
@@ -41,8 +40,12 @@ async def web_socket_token_interceptor(
             raise WebSocketException(
                 status.WS_1008_POLICY_VIOLATION, "Invalid authentication scheme"
             )
-        user_id = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("id")
-        user = UserRepository(db).get_user_by_id(user_id=user_id)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        try:
+            user = UserRepository(db).get_user_by_id(user_id=payload.get("id"))
+        except DatabaseError:
+            logging.info(f"error on get user in database {payload}")
+            raise InvalidJWTError()
         user.websocket = websocket
         await user.websocket.accept()
         return user
