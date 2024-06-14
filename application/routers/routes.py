@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -266,6 +267,7 @@ async def update_waypoints(
     Code 500 "update-failure": erreur au niveau de la base de données
     """
     route_repository = RouteRepository(db)
+    logging.info(f"update_waypoints: {route_id}")
     try:
         route = route_repository.get_route_by_id(route_id)
     except SelectNotFoundError:
