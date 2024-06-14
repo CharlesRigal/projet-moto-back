@@ -1,3 +1,4 @@
+import logging
 from typing import List
 from uuid import UUID
 
@@ -35,7 +36,11 @@ class UserRepository:
             raise ItemCreateError()
 
     def get_user_by_id(self, user_id: UUID) -> User:
-        user = self.db.query(User).filter(User.id == user_id).first()
+        try:
+            user = self.db.query(User).filter(User.id == user_id).first()
+        except Exception as e:
+            logging.info(f"error on database query: {e}")
+            raise ItemNotInListError(e)
         if not user:
             raise SelectNotFoundError()
         return user
