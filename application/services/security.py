@@ -91,6 +91,7 @@ def authenticate_user(db: Session, email: str, password: str):
     try:
         user = db.query(User).filter(User.email == email).first()
     except DatabaseError:
+        logging.info(f"error on get user in database {email}")
         raise InvalidJWTError()
     if not user:
         return False
