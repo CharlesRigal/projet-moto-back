@@ -20,12 +20,10 @@ class Waypoint(Base, SerializerMixin):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     latitude = Column(DECIMAL(precision=8, scale=6), index=True)
     longitude = Column(DECIMAL(precision=9, scale=6), index=True)
-    name = String(100)
+    name = Column(String(100))
     order = Column(Integer)
     route_id = Column(UUID(as_uuid=True), ForeignKey("routes.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    route = relationship(
-        "Route",
-        foreign_keys=[route_id],
-        back_populates="waypoints",
-    )
+    route = relationship("Route", back_populates="waypoints")
+    user = relationship("User", back_populates="waypoints")

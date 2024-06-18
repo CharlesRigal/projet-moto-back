@@ -1,26 +1,21 @@
 from enum import Enum
 from typing import Optional
-
 from fastapi import WebSocket
 import uuid
-
-from sqlalchemy import Column, String, Boolean, UUID
+from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
-
+from sqlalchemy_serializer import SerializerMixin
 from config.database import Base
 from models.friend import Friend
 from models.routes import Route, route_member_association_table
-from sqlalchemy_serializer import SerializerMixin
-
 from services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
 
-
 class Role(str, Enum):
     ADMIN = "admin"
     USER = "user"
-
 
 class User(Base, SerializerMixin):
     __tablename__ = "users"
@@ -35,18 +30,15 @@ class User(Base, SerializerMixin):
         "-friends_received",
         "-friends_received",
     )
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String(30), unique=True)
     email = Column(String(100), unique=True)
     hashed_password = Column(String(254))
     is_active = Column(Boolean, default=True)
     role = Column(String(30), default=Role.USER)
 
-    def have_role(self, str: role):
-        if str == self.role:
-            return True
-        else:
-            return False
+    def have_role(self, role: str) -> bool:
+        return self.role == role
 
     @property
     def websocket(self) -> Optional[WebSocket]:
@@ -95,6 +87,8 @@ class User(Base, SerializerMixin):
         join_depth=1,
         cascade="all,delete",
     )
+
+    waypoints = relationship("Waypoint", back_populates="user", lazy="selectin")
 
     def __str__(self):
         return f"User: {self.username}"

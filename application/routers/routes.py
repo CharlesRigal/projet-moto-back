@@ -289,6 +289,7 @@ async def update_waypoints(
                 latitude=waypoint.latitude,
                 longitude=waypoint.longitude,
                 order=waypoint.order,
+                user_id=waypoint.user_id,
             )
         )
     try:
