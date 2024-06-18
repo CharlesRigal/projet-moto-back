@@ -88,7 +88,10 @@ def get_current_user_admin(user: user_dependency):
 
 
 def authenticate_user(db: Session, email: str, password: str):
-    user = db.query(User).filter(User.email == email).first()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+    except DatabaseError:
+        raise InvalidJWTError()
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
