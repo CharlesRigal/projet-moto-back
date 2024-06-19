@@ -21,14 +21,11 @@ class User(Base, SerializerMixin):
     __tablename__ = "users"
     serialize_rules = (
         "-hashed_password",
-        "-routes_owned",
-        "-routes_owned",
-        "-routes_joined",
-        "-routes_joined",
-        "-friends_sent",
-        "-friends_sent",
-        "-friends_received",
-        "-friends_received",
+        "-routes_owned.owner",
+        "-routes_joined.members",
+        "-friends_sent.requesting_user",
+        "-friends_received.target_user",
+        "-waypoints.user",
     )
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String(30), unique=True)

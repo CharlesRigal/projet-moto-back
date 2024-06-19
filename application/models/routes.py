@@ -1,12 +1,11 @@
-import uuid
-
 from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
-
-from config.database import Base
-from models.waypoint import Waypoint
 from sqlalchemy_serializer import SerializerMixin
+from config.database import Base
+import uuid
 from datetime import datetime
+
+from models.waypoint import Waypoint
 
 route_member_association_table = Table(
     "route_member_association_table",
@@ -15,10 +14,9 @@ route_member_association_table = Table(
     Column("route_id", ForeignKey("routes.id"), primary_key=True),
 )
 
-
 class Route(Base, SerializerMixin):
     __tablename__ = "routes"
-    serialize_rules = [
+    serialize_rules = (
         "-owner.routes_joined",
         "-owner.routes_owned",
         "-owner.friends_sent",
@@ -32,7 +30,8 @@ class Route(Base, SerializerMixin):
         "-members.role",
         "-members.email",
         "-waypoints.route",
-    ]
+        "-waypoints.user",
+    )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))
     description = Column(Text())
