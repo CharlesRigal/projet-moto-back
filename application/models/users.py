@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from fastapi import WebSocket
 import uuid
-from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy import Column, String, Boolean
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
@@ -21,14 +21,11 @@ class User(Base, SerializerMixin):
     __tablename__ = "users"
     serialize_rules = (
         "-hashed_password",
-        "-routes_owned",
-        "-routes_owned",
-        "-routes_joined",
-        "-routes_joined",
-        "-friends_sent",
-        "-friends_sent",
-        "-friends_received",
-        "-friends_received",
+        "-routes_owned.owner",
+        "-routes_joined.members",
+        "-friends_sent.requesting_user",
+        "-friends_received.target_user",
+        "-waypoints",
     )
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String(30), unique=True)
