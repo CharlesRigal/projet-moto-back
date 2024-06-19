@@ -11,6 +11,7 @@ from models.friend import Friend, FriendsStatus
 from models.routes import Route
 from repositories.friends import FriendRepository
 from repositories.users import UserRepository
+from routers.websocket import send_message_to_users_list
 from services.security import get_current_user
 from services.utils import get_db
 
@@ -23,7 +24,7 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def send_friend_request(
+async def send_friend_request(
     requesting_user: user_dependency,
     db: db_dependency,
     friend_request: FriendCreateRequest,
@@ -57,6 +58,9 @@ def send_friend_request(
         target_user=target_user,
     )
     friend_repository = FriendRepository(db)
+
+    await send_message_to_users_list([target_user], {"user-ask-to-be-friend": requesting_user.id})
+
     try:
         friend_repository.create(friend_request_model)
     except ItemCreateError:

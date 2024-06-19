@@ -1,7 +1,7 @@
-from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime
+from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime, select
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
-from config.database import Base
+from config.database import Base, SessionLocal
 import uuid
 from datetime import datetime
 
@@ -12,7 +12,7 @@ route_member_association_table = Table(
     Base.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
     Column("route_id", ForeignKey("routes.id"), primary_key=True),
-    Column("edition", Boolean),
+    Column("edition", Boolean, default=False),
 )
 
 class Route(Base, SerializerMixin):
@@ -68,4 +68,22 @@ class Route(Base, SerializerMixin):
             serialized["date"] = datetime.strptime(
                 serialized["date"], "%Y-%m-%d %H:%M:%S"
             ).strftime("%Y-%m-%dT%H:%M:%S")
+
+        members_with_edition = []
+        session = SessionLocal()
+        for member in self.members:
+            stmt = select(route_member_association_table.c.edition).where(
+                route_member_association_table.c.user_id == member.id,
+                route_member_association_table.c.route_id == self.id
+            )
+            result = session.execute(stmt).fetchone()
+            edition_value = result[0] if result else None
+
+            member_dict = member.to_dict()
+            member_dict['edition'] = edition_value
+            members_with_edition.append(member_dict)
+
+        serialized['members'] = members_with_edition
+        session.close()
+
         return serialized

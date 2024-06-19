@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
+
+from dto.UpdateEditionRequest import UpdateEditionRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
 from dto.waypoints import WayPointCreateRequest
 from exceptions.general import (
@@ -14,7 +16,7 @@ from exceptions.general import (
     ItemCreateError,
     SelectNotFoundError,
 )
-from models.routes import Route
+from models.routes import Route, route_member_association_table
 from models.users import User
 from models.waypoint import Waypoint
 from repositories.routes import RouteRepository
@@ -30,6 +32,42 @@ router = APIRouter(prefix="/api/v0.1/routes", tags=["routes"])
 db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[User, Depends(get_current_user)]
+
+
+@router.put("/{route_id}/update_edition", status_code=status.HTTP_200_OK)
+async def update_edition(
+    route_id: UUID,
+    request: UpdateEditionRequest,
+    db: db_dependency,
+    user: user_dependency
+):
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    route = db.query(Route).filter(Route.id == request.route_id).first()
+    if not route:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
+
+    stmt = (
+        route_member_association_table.update()
+        .where(
+            route_member_association_table.c.user_id == request.user_id,
+            route_member_association_table.c.route_id == request.route_id,
+        )
+        .values(edition=request.edition)
+    )
+    db.execute(stmt)
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
+        )
+
+    updated_route = db.query(Route).filter(Route.id == request.route_id).first()
+    return updated_route.to_dict()
 
 
 @router.put("/{route_id}", status_code=status.HTTP_200_OK)
