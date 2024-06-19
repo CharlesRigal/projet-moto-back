@@ -15,5 +15,5 @@ class Waypoint(Base, SerializerMixin):
     route_id = Column(UUID(as_uuid=True), ForeignKey("routes.id"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    user = relationship("User", back_populates="waypoints", lazy="selectin", join_depth=1)
-    route = relationship("Route", back_populates="waypoints", lazy="selectin", join_depth=1)
+    user = relationship("User", back_populates="waypoints", lazy="selectin")
+    route = relationship("Route", back_populates="waypoints", lazy="selectin")
