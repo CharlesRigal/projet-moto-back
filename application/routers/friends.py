@@ -59,7 +59,9 @@ async def send_friend_request(
     )
     friend_repository = FriendRepository(db)
 
-    await send_message_to_users_list([target_user], {"user-ask-to-be-friend": requesting_user.id})
+    await send_message_to_users_list(
+        [target_user], {"user-ask-to-be-friend": requesting_user.id}
+    )
 
     try:
         friend_repository.create(friend_request_model)

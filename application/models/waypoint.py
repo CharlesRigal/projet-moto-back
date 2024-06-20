@@ -4,6 +4,7 @@ from sqlalchemy_serializer import SerializerMixin
 from config.database import Base
 import uuid
 
+
 class Waypoint(Base, SerializerMixin):
     __tablename__ = "waypoints"
     serialize_rules = ("-route.waypoints", "-user.waypoints")

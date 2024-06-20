@@ -4,10 +4,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, session
 from starlette import status
 
+from config.database import SessionLocal
 from dto.UpdateEditionRequest import UpdateEditionRequest
 from dto.routes import RouteCreateRequest, MemberAddRequest
 from dto.waypoints import WayPointCreateRequest
@@ -39,19 +41,25 @@ async def update_edition(
     route_id: UUID,
     request: UpdateEditionRequest,
     db: db_dependency,
-    user: user_dependency
+    user: user_dependency,
 ):
     route = db.query(Route).filter(Route.id == route_id).first()
 
     if user != route.owner:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
+        )
 
     if not route:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Route not found"
+        )
 
     user_to_allow = db.query(User).filter(User.id == request.user_id).first()
     if not user_to_allow:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     stmt = (
         route_member_association_table.update()
@@ -321,6 +329,19 @@ async def update_waypoints(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="route-not-found"
             )
+
+    stmt = select(route_member_association_table.c.edition).where(
+        route_member_association_table.c.route_id == route_id,
+        route_member_association_table.c.user_id == user.id,
+    )
+    db_session = SessionLocal()
+    result = db_session.execute(stmt).scalar()
+    if result is False:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="you dont have edition right",
+        )
+
     waypoints = []
     for waypoint in waypoint_request:
         waypoints.append(

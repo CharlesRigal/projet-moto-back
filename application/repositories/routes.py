@@ -39,7 +39,7 @@ class RouteRepository:
         return self.db.query(Route).all()
 
     @staticmethod
-    def get_member(route: Route, user_id: str):
+    def get_member(route: Route, user_id: str) -> User:
         for member in route.members:
             if str(member.id) == str(user_id):
                 return member

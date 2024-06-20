@@ -1,4 +1,14 @@
-from sqlalchemy import Column, UUID, String, Boolean, Table, ForeignKey, Text, DateTime, select
+from sqlalchemy import (
+    Column,
+    UUID,
+    String,
+    Boolean,
+    Table,
+    ForeignKey,
+    Text,
+    DateTime,
+    select,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
 from config.database import Base, SessionLocal
@@ -14,6 +24,7 @@ route_member_association_table = Table(
     Column("route_id", ForeignKey("routes.id"), primary_key=True),
     Column("edition", Boolean, default=False, nullable=False),
 )
+
 
 class Route(Base, SerializerMixin):
     __tablename__ = "routes"
@@ -74,16 +85,16 @@ class Route(Base, SerializerMixin):
         for member in self.members:
             stmt = select(route_member_association_table.c.edition).where(
                 route_member_association_table.c.user_id == member.id,
-                route_member_association_table.c.route_id == self.id
+                route_member_association_table.c.route_id == self.id,
             )
             result = session.execute(stmt).fetchone()
             edition_value = result[0] if result else None
 
             member_dict = member.to_dict()
-            member_dict['edition'] = edition_value
+            member_dict["edition"] = edition_value
             members_with_edition.append(member_dict)
 
-        serialized['members'] = members_with_edition
+        serialized["members"] = members_with_edition
         session.close()
 
         return serialized

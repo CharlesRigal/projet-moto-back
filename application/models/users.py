@@ -13,9 +13,11 @@ from services.WebsocketRegistry import WebSocketRegistry
 
 websockets_registry = WebSocketRegistry()
 
+
 class Role(str, Enum):
     ADMIN = "admin"
     USER = "user"
+
 
 class User(Base, SerializerMixin):
     __tablename__ = "users"

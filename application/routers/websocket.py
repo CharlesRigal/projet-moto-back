@@ -26,7 +26,9 @@ async def send_message_to_users_list(users: list[User], dict_for_json: dict):
         try:
             if websocket_registry.connection_is_active(user.id):
                 await user.websocket.send_json(dict_for_json)
-                logging.info(f"send message to {user.username} with content : {dict_for_json}")
+                logging.info(
+                    f"send message to {user.username} with content : {dict_for_json}"
+                )
         except RuntimeError:
             logging.info(
                 f"log: user {user.username} have an closed websocket but we try to send ws: {dict_for_json}"
