@@ -12,7 +12,7 @@ route_member_association_table = Table(
     Base.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
     Column("route_id", ForeignKey("routes.id"), primary_key=True),
-    Column("edition", Boolean, default=False),
+    Column("edition", Boolean, default=False, nullable=False),
 )
 
 class Route(Base, SerializerMixin):

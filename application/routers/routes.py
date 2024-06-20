@@ -41,19 +41,23 @@ async def update_edition(
     db: db_dependency,
     user: user_dependency
 ):
-    user = db.query(User).filter(User.id == request.user_id).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    route = db.query(Route).filter(Route.id == route_id).first()
 
-    route = db.query(Route).filter(Route.id == request.route_id).first()
+    if user != route.owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
+
+    user_to_allow = db.query(User).filter(User.id == request.user_id).first()
+    if not user_to_allow:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     stmt = (
         route_member_association_table.update()
         .where(
-            route_member_association_table.c.user_id == request.user_id,
-            route_member_association_table.c.route_id == request.route_id,
+            route_member_association_table.c.user_id == user_to_allow.id,
+            route_member_association_table.c.route_id == route.id,
         )
         .values(edition=request.edition)
     )
