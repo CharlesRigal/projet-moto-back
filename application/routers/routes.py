@@ -69,9 +69,7 @@ async def update_edition(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="update-failure"
         )
-
-    updated_route = db.query(Route).filter(Route.id == request.route_id).first()
-    return updated_route.to_dict()
+    return route.to_dict()
 
 
 @router.put("/{route_id}", status_code=status.HTTP_200_OK)
