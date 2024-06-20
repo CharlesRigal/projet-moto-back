@@ -80,7 +80,7 @@ app.include_router(websocket.router)
 
 if __name__ == "__main__":
     if settings.env == "development":
-        uvicorn.run("main:app", host="127.0.0.1", port=8888, reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=8888, reload=True)
     else:
         if platform.system() != "Linux":
             raise OSError("Production setting is only suitable on Linux")
