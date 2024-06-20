@@ -31,7 +31,12 @@ class Route(Base, SerializerMixin):
         "-members.role",
         "-members.email",
         "-waypoints.route",
-        "-waypoints.user",
+        "-waypoints.user.waypoints",
+        "-waypoints.user.routes_owned",
+        "-waypoints.user.routes_joined",
+        "-waypoints.user.friends_received",
+        "-waypoints.user.friends_sent",
+        "-waypoints.user.email",
     )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(100))
@@ -44,6 +49,8 @@ class Route(Base, SerializerMixin):
         "User",
         foreign_keys=[owner_id],
         back_populates="routes_owned",
+        join_depth=1,
+
         lazy="selectin",
     )
 
@@ -51,6 +58,8 @@ class Route(Base, SerializerMixin):
         "User",
         secondary=route_member_association_table,
         back_populates="routes_joined",
+        join_depth=1,
+
         lazy="selectin",
     )
 
