@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from typing import Annotated
+from urllib.request import Request
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -34,6 +35,30 @@ router = APIRouter(prefix="/api/v0.1/routes", tags=["routes"])
 db_dependency = Annotated[Session, Depends(get_db)]
 
 user_dependency = Annotated[User, Depends(get_current_user)]
+
+
+@router.delete("/{route_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_route(route_id: UUID, db: db_dependency, user: user_dependency):
+    route = db.query(Route).filter(Route.id == route_id).first()
+    if route is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    if route.owner_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    try:
+        db.delete(route)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
 
 
 @router.put("/{route_id}/update_edition", status_code=status.HTTP_200_OK)
