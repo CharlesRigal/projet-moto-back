@@ -17,7 +17,7 @@ from services.security import get_current_user
 
 router = APIRouter(prefix="/api/v0.1/auth", tags=["auth"])
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(get_current_user)]
+user_dependency = Annotated[User, Depends(get_current_user)]
 
 SECRET_KEY = get_settings().jwt_secret_key
 ALGORITHM = get_settings().jwt_algorithm
